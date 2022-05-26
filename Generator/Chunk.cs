@@ -44,6 +44,19 @@ public class Chunk : IDisposable
         var indices = new List<ushort>();
         var colours = new List<byte>();
 
+        var neighbours = new Block?[6];
+        var vertIdxMap = new int[8];
+        var blockVertices = new Vector3[8];
+        var blockIndices = new[]
+        {
+            6, 7, 2, 2, 7, 4, // Top
+            0, 1, 3, 3, 1, 5, // Bottom
+            7, 6, 5, 5, 6, 3, // North
+            2, 4, 0, 0, 4, 1, // South
+            4, 7, 1, 1, 7, 5, // East
+            6, 2, 3, 3, 2, 0, // West
+        };
+
         foreach (var block in _blocks)
         {
             if (block.BlockType == BlockType.Air) continue;
@@ -52,40 +65,23 @@ public class Chunk : IDisposable
             var startIdx = verticesVec3.Count;
 
             // Get all the neighbouring blocks
-            var neighbours = new[]
-            {
-                GetBlockAtPos(pos with {Y = pos.Y + 1}),
-                GetBlockAtPos(pos with {Y = pos.Y - 1}),
-                GetBlockAtPos(pos with {Z = pos.Z + 1}),
-                GetBlockAtPos(pos with {Z = pos.Z - 1}),
-                GetBlockAtPos(pos with {X = pos.X + 1}),
-                GetBlockAtPos(pos with {X = pos.X - 1}),
-            };
+            neighbours[0] = GetBlockAtPos(pos with {Y = pos.Y + 1});
+            neighbours[1] = GetBlockAtPos(pos with {Y = pos.Y - 1});
+            neighbours[2] = GetBlockAtPos(pos with {Z = pos.Z + 1});
+            neighbours[3] = GetBlockAtPos(pos with {Z = pos.Z - 1});
+            neighbours[4] = GetBlockAtPos(pos with {X = pos.X + 1});
+            neighbours[5] = GetBlockAtPos(pos with {X = pos.X - 1});
 
             // Block vertices
-            var blockVertices = new[]
-            {
-                pos,
-                pos with {X = pos.X + 1},
-                pos with {Y = pos.Y + 1},
-                pos with {Z = pos.Z + 1},
-                pos with {X = pos.X + 1, Y = pos.Y + 1},
-                pos with {X = pos.X + 1, Z = pos.Z + 1},
-                pos with {Y = pos.Y + 1, Z = pos.Z + 1},
-                pos with {X = pos.X + 1, Y = pos.Y + 1, Z = pos.Z + 1},
-            };
-
-            var blockIndices = new[]
-            {
-                6, 7, 2, 2, 7, 4, // Top
-                0, 1, 3, 3, 1, 5, // Bottom
-                7, 6, 5, 5, 6, 3, // North
-                2, 4, 0, 0, 4, 1, // South
-                4, 7, 1, 1, 7, 5, // East
-                6, 2, 3, 3, 2, 0, // West
-            };
-
-            var vertIdxMap = new int[8];
+            blockVertices[0] = pos;
+            blockVertices[1] = pos with {X = pos.X + 1};
+            blockVertices[2] = pos with {Y = pos.Y + 1};
+            blockVertices[3] = pos with {Z = pos.Z + 1};
+            blockVertices[4] = pos with {X = pos.X + 1, Y = pos.Y + 1};
+            blockVertices[5] = pos with {X = pos.X + 1, Z = pos.Z + 1};
+            blockVertices[6] = pos with {Y = pos.Y + 1, Z = pos.Z + 1};
+            blockVertices[7] = pos with {X = pos.X + 1, Y = pos.Y + 1, Z = pos.Z + 1};
+            
             for (int i = 0; i < 8; i++)
                 vertIdxMap[i] = -1;
 
@@ -142,12 +138,12 @@ public class Chunk : IDisposable
             mesh.vertices = (float*) Raylib.MemAlloc(sizeof(float) * vertices.Count);
             mesh.indices = (ushort*) Raylib.MemAlloc(sizeof(ushort) * indices.Count);
             mesh.colors = (byte*) Raylib.MemAlloc(sizeof(byte) * colours.Count);
-            
+
             // Convert to arrays to iterate nicer
             var verticesArr = vertices.ToArray();
             var indicesArr = indices.ToArray();
             var coloursArr = colours.ToArray();
-            
+
             // Copy data across
             for (int i = 0; i < vertices.Count; i++) mesh.vertices[i] = verticesArr[i];
             for (int i = 0; i < indices.Count; i++) mesh.indices[i] = indicesArr[i];
