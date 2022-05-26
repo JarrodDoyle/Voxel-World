@@ -38,7 +38,8 @@ public class Chunk
         {
             var result = generator.GetValue((pos.X + x) * scale, (pos.Y + y) * scale, (pos.Z + z) * scale);
             var type = result > 0 ? BlockType.Stone : BlockType.Air;
-            _blocks[x, y, z] = new Block(new Vector3(x, y, z), type);
+            var color = new Vector4(result, result, result, 1) * 255;
+            _blocks[x, y, z] = new Block(new Vector3(x, y, z), type, color);
         }
     }
 
@@ -48,7 +49,6 @@ public class Chunk
         var indices = new List<ushort>();
         var colours = new List<byte>();
 
-        var rnd = new Random();
         foreach (var block in _blocks)
         {
             if (block.BlockType == BlockType.Air) continue;
@@ -114,9 +114,10 @@ public class Chunk
                         verticesVec3.Add(blockVertices[baseIdx]);
 
                         // Add the colour too!
-                        colours.Add((byte) rnd.Next(100, 256));
-                        colours.Add((byte) rnd.Next(100, 256));
-                        colours.Add((byte) rnd.Next(100, 256));
+                        var c = block.Color;
+                        colours.Add((byte) c.X);
+                        colours.Add((byte) c.Y);
+                        colours.Add((byte) c.Z);
                         colours.Add(255);
                     }
 
