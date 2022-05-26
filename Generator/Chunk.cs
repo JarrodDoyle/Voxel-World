@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using LibNoise;
 using LibNoise.Primitive;
 using Raylib_cs;
@@ -137,15 +138,28 @@ public class Chunk
         }
 
         // Unload the old model from the gpu
-        // Raylib.UnloadModel(_model);
+        Raylib.UnloadModel(_model);
 
         // Build new mesh
         var mesh = new Mesh {vertexCount = verticesVec3.Count, triangleCount = indices.Count / 3};
         unsafe
         {
-            fixed (float* verticesPtr = vertices.ToArray()) mesh.vertices = verticesPtr;
-            fixed (ushort* indicesPtr = indices.ToArray()) mesh.indices = indicesPtr;
-            fixed (byte* coloursPtr = colours.ToArray()) mesh.colors = coloursPtr;
+            // Need to allocate memory manually here! Don't want that pesky GC messing things up
+            var verticesPtr = Marshal.AllocHGlobal(sizeof(float) * vertices.Count);
+            Marshal.Copy(vertices.ToArray(), 0, verticesPtr, vertices.Count);
+            mesh.vertices = (float*) verticesPtr.ToPointer();
+
+            var colorsPtr = Marshal.AllocHGlobal(sizeof(byte) * colours.Count);
+            Marshal.Copy(colours.ToArray(), 0, colorsPtr, colours.Count);
+            mesh.colors = (byte*) colorsPtr.ToPointer();
+
+            // Why doesn't Marshal.Copy have unsigned overloads?? Stupid.
+            var indicesPtr = Marshal.AllocHGlobal(sizeof(ushort) * indices.Count);
+            var indicesArr = indices.ToArray();
+            var rawPtr = (ushort*) indicesPtr.ToPointer();
+            for (int i = 0; i < indices.Count; i++)
+                rawPtr[i] = indicesArr[i];
+            mesh.indices = rawPtr;
         }
 
         Raylib.UploadMesh(ref mesh, false);
