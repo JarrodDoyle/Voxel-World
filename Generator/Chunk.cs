@@ -5,8 +5,8 @@ namespace Generator;
 
 public class Chunk
 {
-    private Vector3 _position;
-    private Vector3 _dimensions;
+    private readonly Vector3 _position;
+    private readonly Vector3 _dimensions;
     private Block[,,] _blocks;
     private Model _model;
 
@@ -26,7 +26,7 @@ public class Chunk
             // _blocks[x, y, z] = new Block(new Vector3(x, y, z), rnd.Next(0, 2) == 1 ? BlockType.Stone : BlockType.Air);
             _blocks[x, y, z] = new Block(new Vector3(x, y, z), BlockType.Stone);
     }
-
+    
     public void GenerateMesh()
     {
         var start = DateTime.Now;
@@ -35,7 +35,7 @@ public class Chunk
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
         var colours = new List<byte>();
-        
+
 
         var rnd = new Random();
         foreach (var block in _blocks)
@@ -45,26 +45,30 @@ public class Chunk
             var pos = block.Position;
             var startIdx = verticesVec3.Count;
 
-            // Add all the vertices
-            verticesVec3.Add(pos);
-            verticesVec3.Add(pos with {X = pos.X + 1});
-            verticesVec3.Add(pos with {Y = pos.Y + 1});
-            verticesVec3.Add(pos with {Z = pos.Z + 1});
-            verticesVec3.Add(pos with {X = pos.X + 1, Y = pos.Y + 1});
-            verticesVec3.Add(pos with {X = pos.X + 1, Z = pos.Z + 1});
-            verticesVec3.Add(pos with {Y = pos.Y + 1, Z = pos.Z + 1});
-            verticesVec3.Add(pos with {X = pos.X + 1, Y = pos.Y + 1, Z = pos.Z + 1});
-
-            // Add vertex colours
-            for (int i = 0; i < 8; i++)
+            // Get all the neighbouring blocks
+            var neighbours = new[]
             {
-                colours.Add((byte) rnd.Next(100, 256));
-                colours.Add((byte) rnd.Next(100, 256));
-                colours.Add((byte) rnd.Next(100, 256));
-                colours.Add(255);
-            }
+                GetBlockAtPos(pos with {Y = pos.Y + 1}),
+                GetBlockAtPos(pos with {Y = pos.Y - 1}),
+                GetBlockAtPos(pos with {Z = pos.Z + 1}),
+                GetBlockAtPos(pos with {Z = pos.Z - 1}),
+                GetBlockAtPos(pos with {X = pos.X + 1}),
+                GetBlockAtPos(pos with {X = pos.X - 1}),
+            };
 
-            // Add triangle indices
+            // Block vertices
+            var blockVertices = new[]
+            {
+                pos,
+                pos with {X = pos.X + 1},
+                pos with {Y = pos.Y + 1},
+                pos with {Z = pos.Z + 1},
+                pos with {X = pos.X + 1, Y = pos.Y + 1},
+                pos with {X = pos.X + 1, Z = pos.Z + 1},
+                pos with {Y = pos.Y + 1, Z = pos.Z + 1},
+                pos with {X = pos.X + 1, Y = pos.Y + 1, Z = pos.Z + 1},
+            };
+
             var blockIndices = new[]
             {
                 6, 7, 2, 2, 7, 4, // Top
@@ -74,22 +78,40 @@ public class Chunk
                 4, 7, 1, 1, 7, 5, // East
                 6, 2, 3, 3, 2, 0, // West
             };
-            
-            var neighbours = new Block?[6];
-            neighbours[0] = GetBlockAtPos(pos with {Y = pos.Y + 1});
-            neighbours[1] = GetBlockAtPos(pos with {Y = pos.Y - 1});
-            neighbours[2] = GetBlockAtPos(pos with {Z = pos.Z + 1});
-            neighbours[3] = GetBlockAtPos(pos with {Z = pos.Z - 1});
-            neighbours[4] = GetBlockAtPos(pos with {X = pos.X + 1});
-            neighbours[5] = GetBlockAtPos(pos with {X = pos.X - 1});
-            
+
+            var vertIdxMap = new int[8];
+            for (int i = 0; i < 8; i++)
+                vertIdxMap[i] = -1;
+
+            int addedVerticesCount = 0;
             for (int i = 0; i < 6; i++)
             {
+                // Ignore neighbours that aren't air
+                // If the neighbour is in another chunk (null) then we add the face
                 var neighbour = neighbours[i];
                 if (neighbour != null && neighbour.BlockType != BlockType.Air) continue;
-            
+
                 for (int j = 0; j < 6; j++)
-                    indices.Add((ushort)(startIdx + blockIndices[i * 6 + j]));
+                {
+                    var baseIdx = blockIndices[i * 6 + j];
+
+                    // Add the vertex if it's not already added
+                    if (vertIdxMap[baseIdx] == -1)
+                    {
+                        vertIdxMap[baseIdx] = addedVerticesCount;
+                        addedVerticesCount++;
+                        verticesVec3.Add(blockVertices[baseIdx]);
+
+                        // Add the colour too!
+                        colours.Add((byte) rnd.Next(100, 256));
+                        colours.Add((byte) rnd.Next(100, 256));
+                        colours.Add((byte) rnd.Next(100, 256));
+                        colours.Add(255);
+                    }
+
+                    // Add the mapped index
+                    indices.Add((ushort) (startIdx + vertIdxMap[baseIdx]));
+                }
             }
         }
 
@@ -116,6 +138,8 @@ public class Chunk
 
         Raylib.UploadMesh(ref mesh, false);
         _model = Raylib.LoadModelFromMesh(mesh);
+        
+        Console.WriteLine($"Gen time: {DateTime.Now - start}");
     }
 
     private bool PosInChunk(Vector3 pos)
