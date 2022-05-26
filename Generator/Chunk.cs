@@ -5,6 +5,7 @@ namespace Generator;
 
 public class Chunk
 {
+    public BoundingBox BoundingBox { get; }
     private readonly Vector3 _position;
     private readonly Vector3 _dimensions;
     private Block[,,] _blocks;
@@ -15,6 +16,10 @@ public class Chunk
         _position = position;
         _dimensions = dimensions;
         _blocks = new Block[(int) dimensions.X, (int) dimensions.Y, (int) dimensions.Z];
+
+        var min = _position * _dimensions;
+        var max = min + _dimensions;
+        BoundingBox = new BoundingBox(min, max);
     }
 
     public void GenerateBlocks()
@@ -29,8 +34,6 @@ public class Chunk
     
     public void GenerateMesh()
     {
-        var start = DateTime.Now;
-        
         var meshes = new List<Mesh>();
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
@@ -138,8 +141,6 @@ public class Chunk
 
         Raylib.UploadMesh(ref mesh, false);
         _model = Raylib.LoadModelFromMesh(mesh);
-        
-        Console.WriteLine($"Gen time: {DateTime.Now - start}");
     }
 
     private bool PosInChunk(Vector3 pos)

@@ -9,7 +9,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -19,13 +19,13 @@ internal static class Program
     private static void Main(string[] args)
     {
         InitWindow(1280, 720, "Raylib + Dear ImGui app");
-        
+
         ImGuiController.Setup();
         // var uiLayers = new List<UiLayer>();
         // foreach (var layer in uiLayers)
         //     layer.Attach();
 
-        var size = 4;
+        var size = 8;
         var chunks = new Chunk[size * size * size];
         for (int x = 0; x < size; x++)
         for (int y = 0; y < size; y++)
@@ -53,13 +53,15 @@ internal static class Program
             //     layer.Update();
 
             Raylib.BeginDrawing();
-            
+
             Raylib.ClearBackground(Color.BLACK);
 
             Raylib.UpdateCamera(ref camera);
             Raylib.BeginMode3D(camera);
+            var frustum = new Frustum();
             foreach (var chunk in chunks)
-                chunk.Render();
+                if (frustum.AabbInside(chunk.BoundingBox))
+                    chunk.Render();
             Raylib.EndMode3D();
 
             ImGuiController.Begin();
