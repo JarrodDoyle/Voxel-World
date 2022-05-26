@@ -1,7 +1,9 @@
-﻿using Raylib_cs;
+﻿using System.Numerics;
+using Generator;
 using ImGuiNET;
+using Raylib_cs;
 
-namespace RlImGuiApp;
+namespace Application;
 
 internal static class Program
 {
@@ -19,25 +21,43 @@ internal static class Program
         InitWindow(1280, 720, "Raylib + Dear ImGui app");
         
         ImGuiController.Setup();
-        var uiLayers = new List<UiLayer> {new ExampleUiLayer {Open = true}};
-        foreach (UiLayer layer in uiLayers)
-            layer.Attach();
+        // var uiLayers = new List<UiLayer>();
+        // foreach (var layer in uiLayers)
+        //     layer.Attach();
+
+        var chunk = new Chunk(new Vector3(), new Vector3(16));
+        chunk.GenerateBlocks();
+        chunk.GenerateMesh();
+
+        var camera = new Camera3D
+        {
+            position = new Vector3(0, 10, 10),
+            target = Vector3.Zero,
+            up = Vector3.UnitY,
+            fovy = 60,
+            projection = CameraProjection.CAMERA_PERSPECTIVE
+        };
+        Raylib.SetCameraMode(camera, CameraMode.CAMERA_FREE);
 
         while (!Raylib.WindowShouldClose())
         {
-            foreach (UiLayer layer in uiLayers)
-                layer.Update();
+            // foreach (var layer in uiLayers)
+            //     layer.Update();
 
             Raylib.BeginDrawing();
             
-            Raylib.ClearBackground(Color.RAYWHITE);
+            Raylib.ClearBackground(Color.BLACK);
             Raylib.DrawFPS(0, 0);
+
+            Raylib.UpdateCamera(ref camera);
+            Raylib.BeginMode3D(camera);
+            chunk.Render();
+            Raylib.EndMode3D();
 
             ImGuiController.Begin();
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
-            ImGui.ShowDemoWindow();
-            foreach (UiLayer layer in uiLayers)
-                layer.Render();
+            // foreach (var layer in uiLayers)
+            //     layer.Render();
             ImGuiController.End();
 
             Raylib.EndDrawing();

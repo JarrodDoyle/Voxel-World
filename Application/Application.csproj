@@ -13,4 +13,8 @@
       <PackageReference Include="Raylib-cs" Version="4.0.0.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Generator\Generator.csproj" />
+    </ItemGroup>
+
 </Project>

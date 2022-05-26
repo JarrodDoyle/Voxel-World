@@ -1,4 +1,4 @@
-namespace RlImGuiApp;
+namespace Application;
 
 public abstract class UiLayer
 {
