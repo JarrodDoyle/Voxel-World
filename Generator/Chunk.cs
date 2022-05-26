@@ -1,5 +1,4 @@
 using System.Numerics;
-using LibNoise;
 using LibNoise.Primitive;
 using Raylib_cs;
 
@@ -12,13 +11,11 @@ public class Chunk : IDisposable
     private readonly Vector3 _dimensions;
     private Block[,,] _blocks;
     private Model _model;
-    public int Seed { get; set; }
 
-    public Chunk(Vector3 position, Vector3 dimensions, int seed)
+    public Chunk(Vector3 position, Vector3 dimensions)
     {
         _position = position;
         _dimensions = dimensions;
-        Seed = seed;
         _blocks = new Block[(int) dimensions.X, (int) dimensions.Y, (int) dimensions.Z];
 
         var min = _position * _dimensions;
@@ -26,10 +23,8 @@ public class Chunk : IDisposable
         BoundingBox = new BoundingBox(min, max);
     }
 
-    public void GenerateBlocks()
+    public void GenerateBlocks(SimplexPerlin generator)
     {
-        var generator = new SimplexPerlin(Seed, NoiseQuality.Best);
-
         var pos = _position * _dimensions;
         var scale = 1f / 32;
         for (int x = 0; x < _dimensions.X; x++)

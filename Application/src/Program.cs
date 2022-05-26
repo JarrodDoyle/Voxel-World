@@ -2,6 +2,8 @@
 using Application.Ui;
 using Generator;
 using ImGuiNET;
+using LibNoise;
+using LibNoise.Primitive;
 using Raylib_cs;
 
 namespace Application;
@@ -26,11 +28,9 @@ internal static class Program
         foreach (var layer in uiLayers)
             layer.Attach();
 
-        var startTime = DateTime.Now;
         ChunkManager.Seed = (int) DateTime.Now.ToBinary();
         ChunkManager.ChunkDimensions = new Vector3(16);
         ChunkManager.LoadChunksAroundPos(Vector3.Zero, 5);
-        Console.WriteLine($"Chunk gen time: {DateTime.Now - startTime}");
 
         var camera = new Camera3D
         {

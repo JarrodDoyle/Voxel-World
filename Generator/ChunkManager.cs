@@ -1,20 +1,34 @@
 using System.Numerics;
+using LibNoise;
+using LibNoise.Primitive;
 using Utils;
 
 namespace Generator;
 
 public static class ChunkManager
 {
-    public static int Seed { get; set; }
+    public static int Seed
+    {
+        get => _seed;
+        set
+        {
+            _seed = value;
+            _generator = new SimplexPerlin(_seed, NoiseQuality.Best);
+        }
+    }
+
     public static Vector3 ChunkDimensions { get; set; } = Vector3.One;
+    private static SimplexPerlin _generator= new();
+
     private static Dictionary<Vector3, Chunk> _chunks = new();
+    private static int _seed;
 
     public static void LoadChunk(Vector3 position)
     {
         if (_chunks.ContainsKey(position)) return;
 
-        var chunk = new Chunk(position, ChunkDimensions, Seed);
-        chunk.GenerateBlocks();
+        var chunk = new Chunk(position, ChunkDimensions);
+        chunk.GenerateBlocks(_generator);
         chunk.GenerateMesh();
         _chunks.Add(position, chunk);
     }
@@ -24,8 +38,7 @@ public static class ChunkManager
         var startTime = DateTime.Now;
         foreach (var chunk in _chunks.Values)
         {
-            chunk.Seed = Seed;
-            chunk.GenerateBlocks();
+            chunk.GenerateBlocks(_generator);
             chunk.GenerateMesh();
         }
 
