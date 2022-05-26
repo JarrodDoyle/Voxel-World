@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="LibNoise.NetStandart" Version="0.2.0" />
       <PackageReference Include="Raylib-cs" Version="4.0.0.1" />
     </ItemGroup>
 

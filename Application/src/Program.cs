@@ -9,7 +9,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -31,7 +31,7 @@ internal static class Program
         for (int y = 0; y < size; y++)
         for (int z = 0; z < size; z++)
         {
-            var chunk = new Chunk(new Vector3(x, y, z), new Vector3(16));
+            var chunk = new Chunk(new Vector3(x, y, z), new Vector3(16), 0);
             chunk.GenerateBlocks();
             chunk.GenerateMesh();
             chunks[x * size * size + y * size + z] = chunk;

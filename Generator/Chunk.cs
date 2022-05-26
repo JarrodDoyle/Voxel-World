@@ -1,4 +1,6 @@
 using System.Numerics;
+using LibNoise;
+using LibNoise.Primitive;
 using Raylib_cs;
 
 namespace Generator;
@@ -10,11 +12,13 @@ public class Chunk
     private readonly Vector3 _dimensions;
     private Block[,,] _blocks;
     private Model _model;
+    private int _seed;
 
-    public Chunk(Vector3 position, Vector3 dimensions)
+    public Chunk(Vector3 position, Vector3 dimensions, int seed)
     {
         _position = position;
         _dimensions = dimensions;
+        _seed = seed;
         _blocks = new Block[(int) dimensions.X, (int) dimensions.Y, (int) dimensions.Z];
 
         var min = _position * _dimensions;
@@ -24,21 +28,25 @@ public class Chunk
 
     public void GenerateBlocks()
     {
-        var rnd = new Random();
+        var generator = new SimplexPerlin(_seed, NoiseQuality.Best);
+
+        var pos = _position * _dimensions;
+        var scale = 1f / 32;
         for (int x = 0; x < _dimensions.X; x++)
         for (int y = 0; y < _dimensions.Y; y++)
         for (int z = 0; z < _dimensions.Z; z++)
-            // _blocks[x, y, z] = new Block(new Vector3(x, y, z), rnd.Next(0, 2) == 1 ? BlockType.Stone : BlockType.Air);
-            _blocks[x, y, z] = new Block(new Vector3(x, y, z), BlockType.Stone);
+        {
+            var result = generator.GetValue((pos.X + x) * scale, (pos.Y + y) * scale, (pos.Z + z) * scale);
+            var type = result > 0 ? BlockType.Stone : BlockType.Air;
+            _blocks[x, y, z] = new Block(new Vector3(x, y, z), type);
+        }
     }
-    
+
     public void GenerateMesh()
     {
-        var meshes = new List<Mesh>();
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
         var colours = new List<byte>();
-
 
         var rnd = new Random();
         foreach (var block in _blocks)
