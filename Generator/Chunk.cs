@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Runtime.InteropServices;
 using LibNoise;
 using LibNoise.Primitive;
 using Raylib_cs;
@@ -145,21 +144,19 @@ public class Chunk
         unsafe
         {
             // Need to allocate memory manually here! Don't want that pesky GC messing things up
-            var verticesPtr = Marshal.AllocHGlobal(sizeof(float) * vertices.Count);
-            Marshal.Copy(vertices.ToArray(), 0, verticesPtr, vertices.Count);
-            mesh.vertices = (float*) verticesPtr.ToPointer();
-
-            var colorsPtr = Marshal.AllocHGlobal(sizeof(byte) * colours.Count);
-            Marshal.Copy(colours.ToArray(), 0, colorsPtr, colours.Count);
-            mesh.colors = (byte*) colorsPtr.ToPointer();
-
-            // Why doesn't Marshal.Copy have unsigned overloads?? Stupid.
-            var indicesPtr = Marshal.AllocHGlobal(sizeof(ushort) * indices.Count);
+            mesh.vertices = (float*) Raylib.MemAlloc(sizeof(float) * vertices.Count);
+            mesh.indices = (ushort*) Raylib.MemAlloc(sizeof(ushort) * indices.Count);
+            mesh.colors = (byte*) Raylib.MemAlloc(sizeof(byte) * colours.Count);
+            
+            // Convert to arrays to iterate nicer
+            var verticesArr = vertices.ToArray();
             var indicesArr = indices.ToArray();
-            var rawPtr = (ushort*) indicesPtr.ToPointer();
-            for (int i = 0; i < indices.Count; i++)
-                rawPtr[i] = indicesArr[i];
-            mesh.indices = rawPtr;
+            var coloursArr = colours.ToArray();
+            
+            // Copy data across
+            for (int i = 0; i < vertices.Count; i++) mesh.vertices[i] = verticesArr[i];
+            for (int i = 0; i < indices.Count; i++) mesh.indices[i] = indicesArr[i];
+            for (int i = 0; i < colours.Count; i++) mesh.colors[i] = coloursArr[i];
         }
 
         Raylib.UploadMesh(ref mesh, false);
