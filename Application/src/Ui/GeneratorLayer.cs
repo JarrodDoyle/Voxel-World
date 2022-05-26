@@ -1,3 +1,4 @@
+using System.Numerics;
 using Generator;
 using ImGuiNET;
 
@@ -5,6 +6,8 @@ namespace Application.Ui;
 
 public class GeneratorLayer : UiLayer
 {
+    private Vector3 _centerPos = Vector3.Zero;
+    
     public override void Attach()
     {
         Console.WriteLine("Attached layer");
@@ -27,6 +30,10 @@ public class GeneratorLayer : UiLayer
         // See and edit the seed
         var seed = ChunkManager.Seed;
         if (ImGui.DragInt("Seed", ref seed)) ChunkManager.Seed = seed;
+        
+        // Move world
+        if (ImGui.InputFloat3("World center", ref _centerPos))
+            ChunkManager.LoadChunksAroundPos(_centerPos, 5);
 
         // Generation
         if (ImGui.Button("Regenerate")) ChunkManager.RegenerateChunks();

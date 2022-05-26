@@ -5,7 +5,7 @@ using Raylib_cs;
 
 namespace Generator;
 
-public class Chunk
+public class Chunk : IDisposable
 {
     public BoundingBox BoundingBox { get; }
     private readonly Vector3 _position;
@@ -179,5 +179,10 @@ public class Chunk
     {
         Raylib.DrawModel(_model, _position * _dimensions, 1, Color.WHITE);
         Raylib.DrawBoundingBox(BoundingBox, Color.GOLD);
+    }
+
+    public void Dispose()
+    {
+        Raylib.UnloadModel(_model);
     }
 }
