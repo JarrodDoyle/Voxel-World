@@ -12,13 +12,13 @@ public class Chunk
     private readonly Vector3 _dimensions;
     private Block[,,] _blocks;
     private Model _model;
-    private int _seed;
+    public int Seed { get; set; }
 
     public Chunk(Vector3 position, Vector3 dimensions, int seed)
     {
         _position = position;
         _dimensions = dimensions;
-        _seed = seed;
+        Seed = seed;
         _blocks = new Block[(int) dimensions.X, (int) dimensions.Y, (int) dimensions.Z];
 
         var min = _position * _dimensions;
@@ -28,7 +28,7 @@ public class Chunk
 
     public void GenerateBlocks()
     {
-        var generator = new SimplexPerlin(_seed, NoiseQuality.Best);
+        var generator = new SimplexPerlin(Seed, NoiseQuality.Best);
 
         var pos = _position * _dimensions;
         var scale = 1f / 32;
@@ -137,7 +137,7 @@ public class Chunk
         }
 
         // Unload the old model from the gpu
-        Raylib.UnloadModel(_model);
+        // Raylib.UnloadModel(_model);
 
         // Build new mesh
         var mesh = new Mesh {vertexCount = verticesVec3.Count, triangleCount = indices.Count / 3};
@@ -167,5 +167,6 @@ public class Chunk
     public void Render()
     {
         Raylib.DrawModel(_model, _position * _dimensions, 1, Color.WHITE);
+        Raylib.DrawBoundingBox(BoundingBox, Color.GOLD);
     }
 }

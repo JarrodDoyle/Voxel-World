@@ -1,4 +1,4 @@
-namespace Application;
+namespace Application.Ui;
 
 public abstract class UiLayer
 {

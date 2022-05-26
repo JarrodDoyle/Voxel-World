@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Application.Ui;
 using Generator;
 using ImGuiNET;
 using Raylib_cs;
@@ -21,22 +22,20 @@ internal static class Program
         InitWindow(1280, 720, "Raylib + Dear ImGui app");
 
         ImGuiController.Setup();
-        // var uiLayers = new List<UiLayer>();
-        // foreach (var layer in uiLayers)
-        //     layer.Attach();
+        var uiLayers = new List<UiLayer> {new GeneratorLayer {Open = true}};
+        foreach (var layer in uiLayers)
+            layer.Attach();
 
-        var size = 8;
-        var chunks = new Chunk[size * size * size];
+        ChunkManager.Seed = (int) DateTime.Now.ToBinary();
+        ChunkManager.ChunkDimensions = new Vector3(16);
+        var size = 16;
+        var startTime = DateTime.Now;
         for (int x = 0; x < size; x++)
         for (int y = 0; y < size; y++)
         for (int z = 0; z < size; z++)
-        {
-            var chunk = new Chunk(new Vector3(x, y, z), new Vector3(16), 0);
-            chunk.GenerateBlocks();
-            chunk.GenerateMesh();
-            chunks[x * size * size + y * size + z] = chunk;
-        }
-
+            ChunkManager.LoadChunk(new Vector3(x, y, z));
+        Console.WriteLine($"Chunk gen time: {DateTime.Now - startTime}");
+        
         var camera = new Camera3D
         {
             position = new Vector3(0, 10, 10),
@@ -49,8 +48,8 @@ internal static class Program
 
         while (!Raylib.WindowShouldClose())
         {
-            // foreach (var layer in uiLayers)
-            //     layer.Update();
+            foreach (var layer in uiLayers)
+                layer.Update();
 
             Raylib.BeginDrawing();
 
@@ -58,16 +57,13 @@ internal static class Program
 
             Raylib.UpdateCamera(ref camera);
             Raylib.BeginMode3D(camera);
-            var frustum = new Frustum();
-            foreach (var chunk in chunks)
-                if (frustum.AabbInside(chunk.BoundingBox))
-                    chunk.Render();
+            ChunkManager.Render();
             Raylib.EndMode3D();
 
             ImGuiController.Begin();
             ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
-            // foreach (var layer in uiLayers)
-            //     layer.Render();
+            foreach (var layer in uiLayers)
+                layer.Render();
             ImGuiController.End();
 
             Raylib.DrawFPS(0, 0);

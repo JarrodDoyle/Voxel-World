@@ -1,7 +1,7 @@
 using System.Numerics;
 using Raylib_cs;
 
-namespace Application;
+namespace Utils;
 
 public class Frustum
 {
