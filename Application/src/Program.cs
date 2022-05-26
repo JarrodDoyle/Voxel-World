@@ -25,9 +25,17 @@ internal static class Program
         // foreach (var layer in uiLayers)
         //     layer.Attach();
 
-        var chunk = new Chunk(new Vector3(), new Vector3(16));
-        chunk.GenerateBlocks();
-        chunk.GenerateMesh();
+        var size = 4;
+        var chunks = new Chunk[size * size * size];
+        for (int x = 0; x < size; x++)
+        for (int y = 0; y < size; y++)
+        for (int z = 0; z < size; z++)
+        {
+            var chunk = new Chunk(new Vector3(x, y, z), new Vector3(16));
+            chunk.GenerateBlocks();
+            chunk.GenerateMesh();
+            chunks[x * size * size + y * size + z] = chunk;
+        }
 
         var camera = new Camera3D
         {
@@ -47,11 +55,11 @@ internal static class Program
             Raylib.BeginDrawing();
             
             Raylib.ClearBackground(Color.BLACK);
-            Raylib.DrawFPS(0, 0);
 
             Raylib.UpdateCamera(ref camera);
             Raylib.BeginMode3D(camera);
-            chunk.Render();
+            foreach (var chunk in chunks)
+                chunk.Render();
             Raylib.EndMode3D();
 
             ImGuiController.Begin();
@@ -60,6 +68,7 @@ internal static class Program
             //     layer.Render();
             ImGuiController.End();
 
+            Raylib.DrawFPS(0, 0);
             Raylib.EndDrawing();
         }
 

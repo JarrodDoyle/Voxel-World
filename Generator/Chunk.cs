@@ -29,9 +29,13 @@ public class Chunk
 
     public void GenerateMesh()
     {
+        var start = DateTime.Now;
+        
+        var meshes = new List<Mesh>();
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
         var colours = new List<byte>();
+        
 
         var rnd = new Random();
         foreach (var block in _blocks)
@@ -70,7 +74,23 @@ public class Chunk
                 4, 7, 1, 1, 7, 5, // East
                 6, 2, 3, 3, 2, 0, // West
             };
-            foreach (var idx in blockIndices) indices.Add((ushort) (startIdx + idx));
+            
+            var neighbours = new Block?[6];
+            neighbours[0] = GetBlockAtPos(pos with {Y = pos.Y + 1});
+            neighbours[1] = GetBlockAtPos(pos with {Y = pos.Y - 1});
+            neighbours[2] = GetBlockAtPos(pos with {Z = pos.Z + 1});
+            neighbours[3] = GetBlockAtPos(pos with {Z = pos.Z - 1});
+            neighbours[4] = GetBlockAtPos(pos with {X = pos.X + 1});
+            neighbours[5] = GetBlockAtPos(pos with {X = pos.X - 1});
+            
+            for (int i = 0; i < 6; i++)
+            {
+                var neighbour = neighbours[i];
+                if (neighbour != null && neighbour.BlockType != BlockType.Air) continue;
+            
+                for (int j = 0; j < 6; j++)
+                    indices.Add((ushort)(startIdx + blockIndices[i * 6 + j]));
+            }
         }
 
         // Convert vec3 list to float list
@@ -81,7 +101,7 @@ public class Chunk
             vertices.Add(vertex.Y);
             vertices.Add(vertex.Z);
         }
-        
+
         // Unload the old model from the gpu
         Raylib.UnloadModel(_model);
 
@@ -98,8 +118,20 @@ public class Chunk
         _model = Raylib.LoadModelFromMesh(mesh);
     }
 
+    private bool PosInChunk(Vector3 pos)
+    {
+        return pos.X >= 0 && pos.X < _dimensions.X &&
+               pos.Y >= 0 && pos.Y < _dimensions.Y &&
+               pos.Z >= 0 && pos.Z < _dimensions.Z;
+    }
+
+    private Block? GetBlockAtPos(Vector3 pos)
+    {
+        return !PosInChunk(pos) ? null : _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z];
+    }
+
     public void Render()
     {
-        Raylib.DrawModel(_model, _position, 1, Color.WHITE);
+        Raylib.DrawModel(_model, _position * _dimensions, 1, Color.WHITE);
     }
 }
