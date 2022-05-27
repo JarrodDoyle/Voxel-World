@@ -1,6 +1,7 @@
 using System.Numerics;
 using LibNoise;
 using LibNoise.Primitive;
+using Raylib_cs;
 using Utils;
 
 namespace Generator;
@@ -24,7 +25,8 @@ public static class ChunkManager
     private static Dictionary<Vector3, Chunk> _chunks = new();
     private static List<Vector3> _chunksToLoad = new();
     private static Vector3 _loadPosition;
-    private static int _loadRadius;
+    private static int _loadRadius = -1;
+    private static Frustum _viewFrustum = new();
 
     private static void LoadChunk(Vector3 position)
     {
@@ -34,6 +36,34 @@ public static class ChunkManager
         chunk.GenerateBlocks(_generator);
         chunk.GenerateMesh();
         _chunks.Add(position, chunk);
+    }
+
+    public static Block? GetBlock(int x, int y, int z)
+    {
+        var cx = MathF.Floor(x / ChunkDimensions.X);
+        var cy = MathF.Floor(y / ChunkDimensions.Y);
+        var cz = MathF.Floor(z / ChunkDimensions.Z);
+        var cPos = new Vector3(cx, cy, cz);
+
+        if (!_chunks.TryGetValue(cPos, out var chunk)) return null;
+        var bx = x % (int) ChunkDimensions.X;
+        var by = y % (int) ChunkDimensions.Y;
+        var bz = z % (int) ChunkDimensions.Z;
+        return chunk.GetBlock(bx, by, bz);
+    }
+
+    public static void SetBlock(int x, int y, int z, Block block)
+    {
+        var cx = MathF.Floor(x / ChunkDimensions.X);
+        var cy = MathF.Floor(y / ChunkDimensions.Y);
+        var cz = MathF.Floor(z / ChunkDimensions.Z);
+        var cPos = new Vector3(cx, cy, cz);
+
+        if (!_chunks.TryGetValue(cPos, out var chunk)) return;
+        var bx = x % (int) ChunkDimensions.X;
+        var by = y % (int) ChunkDimensions.Y;
+        var bz = z % (int) ChunkDimensions.Z;
+        chunk.SetBlock(bx, by, bz, block);
     }
 
     public static void RegenerateChunks()
@@ -52,9 +82,9 @@ public static class ChunkManager
 
     public static void Render()
     {
-        var frustum = new Frustum();
+        _viewFrustum = new Frustum();
         foreach (var chunk in _chunks.Values)
-            if (frustum.AabbInside(chunk.BoundingBox))
+            if (_viewFrustum.AabbInside(chunk.BoundingBox))
                 chunk.Render();
     }
 
@@ -80,6 +110,9 @@ public static class ChunkManager
 
             _chunksToLoad.Add(chunkPos);
         }
+        
+        // Sort by distance to loading position
+        _chunksToLoad = _chunksToLoad.OrderBy(chunkPos => (chunkPos - pos).LengthSquared()).ToList();
 
         // Unload any chunks outside of the radius
         foreach (var (key, chunk) in _chunks)

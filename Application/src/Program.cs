@@ -10,7 +10,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -26,8 +26,10 @@ internal static class Program
         foreach (var layer in uiLayers)
             layer.Attach();
 
+        const int radius = 3;
         ChunkManager.Seed = (int) DateTime.Now.ToBinary();
         ChunkManager.ChunkDimensions = new Vector3(16);
+        ChunkManager.LoadChunksAroundPos(Vector3.Zero, radius);
 
         var camera = new Camera3D
         {
@@ -60,9 +62,8 @@ internal static class Program
             }
             else Raylib.EnableCursor();
             
-            ChunkManager.Update();
-
             Raylib.BeginMode3D(camera);
+            ChunkManager.Update();
             ChunkManager.Render();
             Raylib.EndMode3D();
 

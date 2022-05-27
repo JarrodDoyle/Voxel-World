@@ -12,7 +12,7 @@ public class Chunk : IDisposable
     private Block[,,] _blocks;
     private Model _model;
     private bool _dirty;
-    
+
     private static readonly Vector3[] CubeVertices =
     {
         new(0, 0, 0),
@@ -46,13 +46,19 @@ public class Chunk : IDisposable
         BoundingBox = new BoundingBox(min, max);
     }
 
-    public Block GetBlock(int x, int y, int z)
+    public Block? GetBlock(int x, int y, int z)
     {
-        return _blocks[x, y, z];
+        return GetBlock(new Vector3(x, y, z));
+    }
+
+    private Block? GetBlock(Vector3 pos)
+    {
+        return !PosInChunk(pos) ? null : _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z];
     }
 
     public void SetBlock(int x, int y, int z, Block value)
     {
+        if (!PosInChunk(new Vector3(x, y, z))) return;
         _blocks[x, y, z] = value;
         _dirty = true;
     }
@@ -60,19 +66,23 @@ public class Chunk : IDisposable
     public void GenerateBlocks(SimplexPerlin generator)
     {
         var pos = _position * _dimensions;
-        var scale = 1f / 32;
+        var scale = 1f / 64;
         for (int x = 0; x < _dimensions.X; x++)
         for (int y = 0; y < _dimensions.Y; y++)
         for (int z = 0; z < _dimensions.Z; z++)
         {
-            var result = generator.GetValue((pos.X + x) * scale, (pos.Y + y) * scale, (pos.Z + z) * scale);
-            var type = result > 0 ? BlockType.Stone : BlockType.Air;
-            // var color = new Vector4(result, result, result, 1) * 255;
-            
+            // var result = generator.GetValue((pos.X + x) * scale, (pos.Y + y) * scale, (pos.Z + z) * scale);
+            // var type = result > 0 ? BlockType.Stone : BlockType.Air;
+
+            var result = 0.0f;
+            for (int i = 0; i < 3; i++)
+                result += generator.GetValue((pos.X + x) * scale * MathF.Pow(2, i),
+                    (pos.Z + z) * scale * MathF.Pow(2, i)) * MathF.Pow(0.5f, i);
+            result /= 3;
             // var result = generator.GetValue((pos.X + x) * scale, (pos.Z + z) * scale);
-            // var type = pos.Y + y < 32 + 20 * result ? BlockType.Stone : BlockType.Air;
+            var type = pos.Y + y < 32 + 20 * result ? BlockType.Stone : BlockType.Air;
             var color = new Vector4(x * 16, y * 16, z * 16, 255);
-            _blocks[x, y, z] = new Block(new Vector3(x, y, z), type, color);
+            SetBlock(x, y, z, new Block(new Vector3(x, y, z), type, color));
         }
     }
 
@@ -81,28 +91,28 @@ public class Chunk : IDisposable
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
         var colours = new List<byte>();
-    
+
         var neighbours = new Block?[6];
         var vertIdxMap = new int[8];
 
         foreach (var block in _blocks)
         {
             if (block.BlockType == BlockType.Air) continue;
-    
+
             var pos = block.Position;
             var startIdx = verticesVec3.Count;
-    
+
             // Get all the neighbouring blocks
-            neighbours[0] = GetBlockAtPos(pos with {Y = pos.Y + 1});
-            neighbours[1] = GetBlockAtPos(pos with {Y = pos.Y - 1});
-            neighbours[2] = GetBlockAtPos(pos with {Z = pos.Z + 1});
-            neighbours[3] = GetBlockAtPos(pos with {Z = pos.Z - 1});
-            neighbours[4] = GetBlockAtPos(pos with {X = pos.X + 1});
-            neighbours[5] = GetBlockAtPos(pos with {X = pos.X - 1});
-            
+            neighbours[0] = GetBlock(pos with {Y = pos.Y + 1});
+            neighbours[1] = GetBlock(pos with {Y = pos.Y - 1});
+            neighbours[2] = GetBlock(pos with {Z = pos.Z + 1});
+            neighbours[3] = GetBlock(pos with {Z = pos.Z - 1});
+            neighbours[4] = GetBlock(pos with {X = pos.X + 1});
+            neighbours[5] = GetBlock(pos with {X = pos.X - 1});
+
             for (int i = 0; i < 8; i++)
                 vertIdxMap[i] = -1;
-    
+
             int addedVerticesCount = 0;
             for (int i = 0; i < 6; i++)
             {
@@ -110,18 +120,18 @@ public class Chunk : IDisposable
                 // If the neighbour is in another chunk (null) then we add the face
                 var neighbour = neighbours[i];
                 if (neighbour != null && neighbour.BlockType != BlockType.Air) continue;
-    
+
                 for (int j = 0; j < 6; j++)
                 {
                     var baseIdx = CubeTriangles[i * 6 + j];
-    
+
                     // Add the vertex if it's not already added
                     if (vertIdxMap[baseIdx] == -1)
                     {
                         vertIdxMap[baseIdx] = addedVerticesCount;
                         addedVerticesCount++;
                         verticesVec3.Add(pos + CubeVertices[baseIdx]);
-    
+
                         // Add the colour too!
                         var c = block.Color;
                         colours.Add((byte) c.X);
@@ -129,13 +139,13 @@ public class Chunk : IDisposable
                         colours.Add((byte) c.Z);
                         colours.Add(255);
                     }
-    
+
                     // Add the mapped index
                     indices.Add((ushort) (startIdx + vertIdxMap[baseIdx]));
                 }
             }
         }
-    
+
         // Convert vec3 list to float list
         var vertices = new List<float>();
         foreach (var vertex in verticesVec3)
@@ -144,10 +154,10 @@ public class Chunk : IDisposable
             vertices.Add(vertex.Y);
             vertices.Add(vertex.Z);
         }
-    
+
         // Unload the old model from the gpu
         Raylib.UnloadModel(_model);
-    
+
         // Build new mesh
         var mesh = new Mesh {vertexCount = verticesVec3.Count, triangleCount = indices.Count / 3};
         unsafe
@@ -156,18 +166,18 @@ public class Chunk : IDisposable
             mesh.vertices = (float*) Raylib.MemAlloc(sizeof(float) * vertices.Count);
             mesh.indices = (ushort*) Raylib.MemAlloc(sizeof(ushort) * indices.Count);
             mesh.colors = (byte*) Raylib.MemAlloc(sizeof(byte) * colours.Count);
-    
+
             // Convert to arrays to iterate nicer
             var verticesArr = vertices.ToArray();
             var indicesArr = indices.ToArray();
             var coloursArr = colours.ToArray();
-    
+
             // Copy data across
             for (int i = 0; i < vertices.Count; i++) mesh.vertices[i] = verticesArr[i];
             for (int i = 0; i < indices.Count; i++) mesh.indices[i] = indicesArr[i];
             for (int i = 0; i < colours.Count; i++) mesh.colors[i] = coloursArr[i];
         }
-    
+
         Raylib.UploadMesh(ref mesh, false);
         _model = Raylib.LoadModelFromMesh(mesh);
     }
@@ -179,11 +189,6 @@ public class Chunk : IDisposable
                pos.Z >= 0 && pos.Z < _dimensions.Z;
     }
 
-    private Block? GetBlockAtPos(Vector3 pos)
-    {
-        return !PosInChunk(pos) ? null : _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z];
-    }
-
     public void Render()
     {
         if (_dirty)
@@ -191,7 +196,7 @@ public class Chunk : IDisposable
             GenerateMesh();
             _dirty = false;
         }
-        
+
         Raylib.DrawModel(_model, _position * _dimensions, 1, Color.WHITE);
         // Raylib.DrawBoundingBox(BoundingBox, Color.GOLD);
     }
