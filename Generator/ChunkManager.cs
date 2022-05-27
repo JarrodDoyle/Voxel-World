@@ -129,9 +129,21 @@ public static class ChunkManager
 
     public static void Update()
     {
-        if (_chunksToLoad.Count == 0) return;
+        var chunkPosArr = _chunksToLoad.ToArray();
+        var idxToRemove = -1;
+        for (int i = 0; i < chunkPosArr.Length; i++)
+        {
+            var chunkPos = chunkPosArr[i];
 
-        LoadChunk(_chunksToLoad.ElementAt(0));
-        _chunksToLoad.RemoveAt(0);
+            var min = chunkPos * ChunkDimensions;
+            var max = min + ChunkDimensions;
+            if (!_viewFrustum.AabbInside(new BoundingBox(min, max))) continue;
+            
+            LoadChunk(chunkPos);
+            idxToRemove = i;
+            break;
+        }
+        
+        if (idxToRemove != -1) _chunksToLoad.RemoveAt(idxToRemove);
     }
 }
