@@ -7,6 +7,7 @@ namespace Generator;
 
 public static class ChunkManager
 {
+    private static int _seed;
     public static int Seed
     {
         get => _seed;
@@ -19,11 +20,12 @@ public static class ChunkManager
 
     public static Vector3 ChunkDimensions { get; set; } = Vector3.One;
     private static SimplexPerlin _generator= new();
-
     private static Dictionary<Vector3, Chunk> _chunks = new();
-    private static int _seed;
+    private static List<Vector3> _chunksToLoad = new();
+    private static Vector3 _loadPosition;
+    private static int _loadRadius;
 
-    public static void LoadChunk(Vector3 position)
+    private static void LoadChunk(Vector3 position)
     {
         if (_chunks.ContainsKey(position)) return;
 
@@ -60,16 +62,23 @@ public static class ChunkManager
 
     public static void LoadChunksAroundPos(Vector3 pos, int radius)
     {
-        var startTime = DateTime.Now;
-        var startSize = _chunks.Count;
-
+        if (pos == _loadPosition && radius == _loadRadius) return;
+        _loadPosition = pos;
+        _loadRadius = radius;
+        
+        // Build list of chunks that need loading
+        _chunksToLoad.Clear();
         for (int x = -radius; x <= radius; x++)
         for (int y = -radius; y <= radius; y++)
         for (int z = -radius; z <= radius; z++)
-            LoadChunk(new Vector3(pos.X + x, pos.Y + y, pos.Z + z));
-
-        var loadedNewChunks = _chunks.Count != startSize;
-
+        {
+            var chunkPos = new Vector3(pos.X + x, pos.Y + y, pos.Z + z);
+            if (_chunks.ContainsKey(chunkPos)) continue;
+                
+            _chunksToLoad.Add(chunkPos);
+        }
+        
+        // Unload any chunks outside of the radius
         foreach (var (key, chunk) in _chunks)
         {
             if (key.X < pos.X - radius || key.X > pos.X + radius ||
@@ -80,7 +89,13 @@ public static class ChunkManager
                 _chunks.Remove(key);
             }
         }
+    }
 
-        if (loadedNewChunks) Console.WriteLine($"Generation time: {DateTime.Now - startTime}");
+    public static void Update()
+    {
+        if (_chunksToLoad.Count == 0) return;
+        
+        LoadChunk(_chunksToLoad.ElementAt(0));
+        _chunksToLoad.RemoveAt(0);
     }
 }

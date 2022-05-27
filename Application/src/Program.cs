@@ -2,8 +2,6 @@
 using Application.Ui;
 using Generator;
 using ImGuiNET;
-using LibNoise;
-using LibNoise.Primitive;
 using Raylib_cs;
 
 namespace Application;
@@ -12,7 +10,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -30,16 +28,16 @@ internal static class Program
 
         ChunkManager.Seed = (int) DateTime.Now.ToBinary();
         ChunkManager.ChunkDimensions = new Vector3(16);
-        ChunkManager.LoadChunksAroundPos(Vector3.Zero, 5);
 
         var camera = new Camera3D
         {
-            position = new Vector3(0, 10, 10),
+            position = new Vector3(0, 56, 0),
             target = Vector3.Zero,
             up = Vector3.UnitY,
             fovy = 60,
             projection = CameraProjection.CAMERA_PERSPECTIVE
         };
+        Raylib.SetCameraMode(camera, CameraMode.CAMERA_FREE);
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FIRST_PERSON);
 
         while (!Raylib.WindowShouldClose())
@@ -48,24 +46,21 @@ internal static class Program
                 layer.Update();
 
             Raylib.BeginDrawing();
-
             Raylib.ClearBackground(Color.BLACK);
 
             if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
             {
                 Raylib.DisableCursor();
                 Raylib.UpdateCamera(ref camera);
-
                 var pos = new Vector3(
                     MathF.Floor(camera.position.X / 16),
                     MathF.Floor(camera.position.Y / 16),
                     MathF.Floor(camera.position.Z / 16));
-                ChunkManager.LoadChunksAroundPos(pos, 3);
+                ChunkManager.LoadChunksAroundPos(pos, 8);
             }
-            else
-            {
-                Raylib.EnableCursor();
-            }
+            else Raylib.EnableCursor();
+            
+            ChunkManager.Update();
 
             Raylib.BeginMode3D(camera);
             ChunkManager.Render();
