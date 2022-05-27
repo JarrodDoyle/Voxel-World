@@ -8,6 +8,7 @@ namespace Generator;
 public static class ChunkManager
 {
     private static int _seed;
+
     public static int Seed
     {
         get => _seed;
@@ -19,7 +20,7 @@ public static class ChunkManager
     }
 
     public static Vector3 ChunkDimensions { get; set; } = Vector3.One;
-    private static SimplexPerlin _generator= new();
+    private static SimplexPerlin _generator = new();
     private static Dictionary<Vector3, Chunk> _chunks = new();
     private static List<Vector3> _chunksToLoad = new();
     private static Vector3 _loadPosition;
@@ -38,13 +39,15 @@ public static class ChunkManager
     public static void RegenerateChunks()
     {
         var startTime = DateTime.Now;
-        foreach (var chunk in _chunks.Values)
-        {
-            chunk.GenerateBlocks(_generator);
-            chunk.GenerateMesh();
-        }
-
+        foreach (var chunk in _chunks.Values) chunk.GenerateBlocks(_generator);
         Console.WriteLine($"Chunk gen time: {DateTime.Now - startTime}");
+    }
+
+    public static void RegenerateMeshes()
+    {
+        var startTime = DateTime.Now;
+        foreach (var chunk in _chunks.Values) chunk.GenerateMesh();
+        Console.WriteLine($"Mesh gen time: {DateTime.Now - startTime}");
     }
 
     public static void Render()
@@ -65,7 +68,7 @@ public static class ChunkManager
         if (pos == _loadPosition && radius == _loadRadius) return;
         _loadPosition = pos;
         _loadRadius = radius;
-        
+
         // Build list of chunks that need loading
         _chunksToLoad.Clear();
         for (int x = -radius; x <= radius; x++)
@@ -74,10 +77,10 @@ public static class ChunkManager
         {
             var chunkPos = new Vector3(pos.X + x, pos.Y + y, pos.Z + z);
             if (_chunks.ContainsKey(chunkPos)) continue;
-                
+
             _chunksToLoad.Add(chunkPos);
         }
-        
+
         // Unload any chunks outside of the radius
         foreach (var (key, chunk) in _chunks)
         {
@@ -94,7 +97,7 @@ public static class ChunkManager
     public static void Update()
     {
         if (_chunksToLoad.Count == 0) return;
-        
+
         LoadChunk(_chunksToLoad.ElementAt(0));
         _chunksToLoad.RemoveAt(0);
     }

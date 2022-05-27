@@ -36,9 +36,9 @@ public class GeneratorLayer : UiLayer
             ChunkManager.LoadChunksAroundPos(_centerPos, 5);
 
         // Generation
-        if (ImGui.Button("Regenerate")) ChunkManager.RegenerateChunks();
+        if (ImGui.Button("Regenerate Meshes")) ChunkManager.RegenerateMeshes();
         ImGui.SameLine();
-        if (ImGui.Button("Regenerate Random"))
+        if (ImGui.Button("Generate Chunks"))
         {
             ChunkManager.Seed = (int) DateTime.Now.ToBinary();
             ChunkManager.RegenerateChunks();
