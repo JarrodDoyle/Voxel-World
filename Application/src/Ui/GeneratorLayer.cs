@@ -1,5 +1,5 @@
 using System.Numerics;
-using Generator;
+using VoxelWorld;
 using ImGuiNET;
 
 namespace Application.Ui;
@@ -23,28 +23,28 @@ public class GeneratorLayer : UiLayer
         var isOpen = Open;
         if (!isOpen) return;
 
-        ImGui.Begin("Generation Controller", ref isOpen);
-
-        ImGui.Value("Loaded Chunks", ChunkManager.LoadedChunksCount());
-
-        // See and edit the seed
-        var seed = ChunkManager.Seed;
-        if (ImGui.DragInt("Seed", ref seed)) ChunkManager.Seed = seed;
-        
-        // Move world
-        if (ImGui.InputFloat3("World center", ref _centerPos))
-            ChunkManager.LoadChunksAroundPos(_centerPos, 5);
-
-        // Generation
-        if (ImGui.Button("Regenerate Meshes")) ChunkManager.RegenerateMeshes();
-        ImGui.SameLine();
-        if (ImGui.Button("Generate Chunks"))
-        {
-            ChunkManager.Seed = (int) DateTime.Now.ToBinary();
-            ChunkManager.RegenerateChunks();
-        }
-
-        ImGui.End();
+        // ImGui.Begin("Generation Controller", ref isOpen);
+        //
+        // ImGui.Value("Loaded Chunks", ChunkManager.LoadedChunksCount());
+        //
+        // // See and edit the seed
+        // var seed = ChunkManager.Seed;
+        // if (ImGui.DragInt("Seed", ref seed)) ChunkManager.Seed = seed;
+        //
+        // // Move world
+        // if (ImGui.InputFloat3("World center", ref _centerPos))
+        //     ChunkManager.LoadChunksAroundPos(_centerPos, 5);
+        //
+        // // Generation
+        // if (ImGui.Button("Regenerate Meshes")) ChunkManager.RegenerateMeshes();
+        // ImGui.SameLine();
+        // if (ImGui.Button("Generate Chunks"))
+        // {
+        //     ChunkManager.Seed = (int) DateTime.Now.ToBinary();
+        //     ChunkManager.RegenerateChunks();
+        // }
+        //
+        // ImGui.End();
 
         Open = isOpen;
     }

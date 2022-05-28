@@ -1,4 +1,4 @@
-namespace Generator;
+namespace VoxelWorld;
 
 public enum BlockType
 {

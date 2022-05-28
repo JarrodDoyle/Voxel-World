@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace Generator;
+namespace VoxelWorld;
 
 public class Block
 {

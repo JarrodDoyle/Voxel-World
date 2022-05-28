@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using Application.Ui;
-using Generator;
+using VoxelWorld;
 using ImGuiNET;
 using Raylib_cs;
 
@@ -10,7 +10,7 @@ internal static class Program
 {
     private static void InitWindow(int width, int height, string title)
     {
-        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT |
+        Raylib.SetConfigFlags(ConfigFlags.FLAG_MSAA_4X_HINT | ConfigFlags.FLAG_VSYNC_HINT |
                               ConfigFlags.FLAG_WINDOW_RESIZABLE);
         Raylib.SetTraceLogLevel(TraceLogLevel.LOG_WARNING);
         Raylib.InitWindow(width, height, title);
@@ -26,11 +26,6 @@ internal static class Program
         foreach (var layer in uiLayers)
             layer.Attach();
 
-        const int radius = 3;
-        ChunkManager.Seed = (int) DateTime.Now.ToBinary();
-        ChunkManager.ChunkDimensions = new Vector3(16);
-        ChunkManager.LoadChunksAroundPos(Vector3.Zero, radius);
-
         var camera = new Camera3D
         {
             position = new Vector3(0, 56, 0),
@@ -41,6 +36,11 @@ internal static class Program
         };
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FREE);
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FIRST_PERSON);
+
+        const int radius = 8;
+        var world = new World((int) DateTime.Now.ToBinary(), 0, new Vector3(16));
+        var chunkManager = new ChunkManager(world);
+        chunkManager.LoadChunksAroundPosition(camera.position, radius);
 
         while (!Raylib.WindowShouldClose())
         {
@@ -58,13 +58,13 @@ internal static class Program
                     MathF.Floor(camera.position.X / 16),
                     MathF.Floor(camera.position.Y / 16),
                     MathF.Floor(camera.position.Z / 16));
-                ChunkManager.LoadChunksAroundPos(pos, 8);
+                chunkManager.LoadChunksAroundPosition(pos, radius);
             }
             else Raylib.EnableCursor();
             
             Raylib.BeginMode3D(camera);
-            ChunkManager.Update();
-            ChunkManager.Render();
+            chunkManager.Update();
+            chunkManager.Render();
             Raylib.EndMode3D();
 
             ImGuiController.Begin();

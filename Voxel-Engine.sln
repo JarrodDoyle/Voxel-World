@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{25F1C0FF-58B3-4084-9B37-19A37941DE8D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Generator", "Generator\Generator.csproj", "{7FDAD94F-94A5-4B54-8614-D8347C31FB35}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoxelWorld", "VoxelWorld\VoxelWorld.csproj", "{7FDAD94F-94A5-4B54-8614-D8347C31FB35}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj", "{9CB06BCF-5CCA-4D5C-B45C-FA3330C573AB}"
 EndProject
