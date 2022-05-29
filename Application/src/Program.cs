@@ -40,7 +40,6 @@ internal static class Program
         const int radius = 8;
         var world = new World((int) DateTime.Now.ToBinary(), 0, new Vector3(16));
         var chunkManager = new ChunkManager(world);
-        chunkManager.LoadChunksAroundPosition(camera.position, radius);
 
         while (!Raylib.WindowShouldClose())
         {

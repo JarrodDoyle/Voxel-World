@@ -6,11 +6,11 @@ namespace VoxelWorld;
 
 public class ChunkManager
 {
-    private World _world;
+    private readonly World _world;
     private Vector3 _loadPosition;
     private int _loadRadius;
-    private List<Vector3> _loadedChunks;
-    private List<Vector3> _chunksToLoad;
+    private readonly List<Vector3> _loadedChunks;
+    private readonly List<Vector3> _loadingChunks;
     private Frustum _viewFrustum;
 
 
@@ -20,7 +20,7 @@ public class ChunkManager
         _loadPosition = Vector3.Zero;
         _loadRadius = -1;
         _loadedChunks = new List<Vector3>();
-        _chunksToLoad = new List<Vector3>();
+        _loadingChunks = new List<Vector3>();
         _viewFrustum = new Frustum();
     }
 
@@ -31,23 +31,33 @@ public class ChunkManager
         _loadRadius = radius;
 
         // Build list of chunks that need loading
-        _chunksToLoad.Clear();
+        var chunksToLoad = new List<Vector3>();
         for (int x = -radius; x <= radius; x++)
         for (int y = -radius; y <= radius; y++)
         for (int z = -radius; z <= radius; z++)
         {
             var chunkPos = position + new Vector3(x, y, z);
-            if (_world.ChunkIsLoaded(chunkPos))
-            {
-                _loadedChunks.Add(chunkPos);
-                continue;
-            }
+            var loaded = _world.ChunkIsLoaded(chunkPos);
+            var loading = _world.ChunkIsLoading(chunkPos);
 
-            _chunksToLoad.Add(chunkPos);
+            if (loaded && !_loadedChunks.Contains(chunkPos))
+                _loadedChunks.Add(chunkPos);
+
+            if (loading && !_loadingChunks.Contains(chunkPos))
+                _loadingChunks.Add(chunkPos);
+
+            if (!loaded && !loading && !_loadingChunks.Contains(chunkPos))
+            {
+                chunksToLoad.Add(chunkPos);
+                _loadingChunks.Add(chunkPos);
+            }
         }
-        
+
         // Sort by distance to loading position
-        _chunksToLoad = _chunksToLoad.OrderBy(chunkPos => (chunkPos - position).LengthSquared()).ToList();
+        chunksToLoad = chunksToLoad.OrderBy(chunkPos => (chunkPos - position).LengthSquared()).ToList();
+        foreach (var chunkPos in chunksToLoad)
+            _world.LoadChunk(chunkPos);
+
 
         // Unload any chunks outside of the radius
         var chunksToUnload = new List<Vector3>();
@@ -61,26 +71,23 @@ public class ChunkManager
                 chunksToUnload.Add(chunkPos);
             }
         }
-        
+
         foreach (var chunk in chunksToUnload) _loadedChunks.Remove(chunk);
     }
 
     public void Update()
     {
-        var chunkPosArr = _chunksToLoad.ToArray();
-        var idxToRemove = -1;
-        for (int i = 0; i < chunkPosArr.Length; i++)
+        var loadingChunksToRemove = new List<Vector3>();
+        foreach (var chunkPos in _loadingChunks)
         {
-            var chunkPos = chunkPosArr[i];
-            if (!ChunkInFrustum(chunkPos)) continue;
+            if (!_world.ChunkIsLoaded(chunkPos)) continue;
 
-            _world.LoadChunk(chunkPos);
+            loadingChunksToRemove.Add(chunkPos);
             _loadedChunks.Add(chunkPos);
-            idxToRemove = i;
-            break;
         }
 
-        if (idxToRemove != -1) _chunksToLoad.RemoveAt(idxToRemove);
+        foreach (var chunkPos in loadingChunksToRemove)
+            _loadingChunks.Remove(chunkPos);
     }
 
     public void Render()

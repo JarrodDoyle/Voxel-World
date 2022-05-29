@@ -10,6 +10,7 @@ public class Chunk
     private readonly Vector3 _dimensions;
     private readonly Block[,,] _blocks;
     private bool _dirty;
+    private Task<Mesh?>? _modelGenTask;
     private Model? _model;
 
     public Chunk(Vector3 position, Vector3 dimensions)
@@ -60,12 +61,28 @@ public class Chunk
 
     public void Render()
     {
-        if (_dirty)
+        // If there was a mesh gen task running and it's complete we need to build the new model
+        if (_modelGenTask is {IsCompleted: true})
         {
-            GenerateModel();
+            UnloadModel();
+            var tmpMesh = _modelGenTask.Result;
+            if (tmpMesh != null)
+            {
+                var mesh = (Mesh) tmpMesh;
+                Raylib.UploadMesh(ref mesh, false);
+                _model = Raylib.LoadModelFromMesh(mesh);
+            }
+
+            _modelGenTask = null;
+        }
+
+        // Only starts a new task if one isn't already running
+        if (_dirty && _modelGenTask == null)
+        {
+            _modelGenTask = Task.Run(GenerateMesh);
             _dirty = false;
         }
-        
+
         if (_model == null) return;
         Raylib.DrawModel((Model) _model, _position * _dimensions, 1, Color.WHITE);
     }
@@ -92,7 +109,8 @@ public class Chunk
         6, 2, 3, 3, 2, 0, // West
     };
 
-    private void GenerateModel()
+    // TODO: This probably shouldn't be in this file
+    private Mesh? GenerateMesh()
     {
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
@@ -162,9 +180,7 @@ public class Chunk
         }
 
         // Build the model
-        UnloadModel();
-        var mesh = MeshBuilder.BuildMesh(vertices.ToArray(), indices.ToArray(), colours.ToArray());
-        Raylib.UploadMesh(ref mesh, false);
-        _model = Raylib.LoadModelFromMesh(mesh);
+        if (verticesVec3.Count == 0) return null;
+        return MeshBuilder.BuildMesh(vertices.ToArray(), indices.ToArray(), colours.ToArray());
     }
 }
