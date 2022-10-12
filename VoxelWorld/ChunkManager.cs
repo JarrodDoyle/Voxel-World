@@ -92,11 +92,11 @@ public class ChunkManager
 
     public void Render()
     {
-        _viewFrustum = new Frustum();
+        _viewFrustum.UpdatePlanes();
         foreach (var chunkPos in _loadedChunks)
         {
-            if (!ChunkInFrustum(chunkPos)) continue;
-            _world.GetChunk(chunkPos)?.Render();
+            if (ChunkInFrustum(chunkPos))
+                _world.GetChunk(chunkPos)?.Render();
         }
     }
 

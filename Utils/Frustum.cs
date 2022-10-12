@@ -9,6 +9,11 @@ public class Frustum
 
     public Frustum()
     {
+        _planes = new Plane[6];
+    }
+
+    public void UpdatePlanes()
+    {
         var mat = Rlgl.rlGetMatrixProjection() * Rlgl.rlGetMatrixModelview();
         var right = new Vector4(mat.M41 - mat.M11, mat.M42 - mat.M12, mat.M43 - mat.M13, mat.M44 - mat.M14);
         var left = new Vector4(mat.M41 + mat.M11, mat.M42 + mat.M12, mat.M43 + mat.M13, mat.M44 + mat.M14);
@@ -17,7 +22,6 @@ public class Frustum
         var front = new Vector4(mat.M41 - mat.M31, mat.M42 - mat.M32, mat.M43 - mat.M33, mat.M44 - mat.M34);
         var back = new Vector4(mat.M41 + mat.M31, mat.M42 + mat.M32, mat.M43 + mat.M33, mat.M44 + mat.M34);
 
-        _planes = new Plane[6];
         _planes[0] = Plane.Normalize(new Plane(back));
         _planes[1] = Plane.Normalize(new Plane(front));
         _planes[2] = Plane.Normalize(new Plane(bottom));
@@ -28,23 +32,13 @@ public class Frustum
 
     public bool AabbInside(BoundingBox aabb)
     {
-        if (PointInside(new Vector3(aabb.min.X, aabb.min.Y, aabb.min.Z))) return true;
-        if (PointInside(new Vector3(aabb.min.X, aabb.min.Y, aabb.max.Z))) return true;
-        if (PointInside(new Vector3(aabb.min.X, aabb.max.Y, aabb.min.Z))) return true;
-        if (PointInside(new Vector3(aabb.min.X, aabb.max.Y, aabb.max.Z))) return true;
-        if (PointInside(new Vector3(aabb.max.X, aabb.min.Y, aabb.min.Z))) return true;
-        if (PointInside(new Vector3(aabb.max.X, aabb.min.Y, aabb.max.Z))) return true;
-        if (PointInside(new Vector3(aabb.max.X, aabb.max.Y, aabb.min.Z))) return true;
-        if (PointInside(new Vector3(aabb.max.X, aabb.max.Y, aabb.max.Z))) return true;
-
-        return false;
-    }
-
-    private bool PointInside(Vector3 point)
-    {
         foreach (var plane in _planes)
-            if (Vector3.Dot(plane.Normal, point) + plane.D <= 0)
+        {
+            var point = Vector3.Max(aabb.min * plane.Normal, aabb.max * plane.Normal);
+            var distance = point.X + point.Y + point.Z + plane.D;
+            if (distance <= 0)
                 return false;
+        }
 
         return true;
     }
