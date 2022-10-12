@@ -1,32 +1,46 @@
 using System.Numerics;
-using LibNoise;
-using LibNoise.Primitive;
 
 namespace VoxelWorld.Generation;
 
 public class Simplex3dWorld : WorldGenerator
 {
-    private SimplexPerlin _noiseFunction;
+    private readonly FastNoise _noiseGenerator;
     private float _scale;
-    
+    private readonly int _seed;
+
     public Simplex3dWorld(int seed, float scale)
     {
-        _noiseFunction = new SimplexPerlin(seed, NoiseQuality.Best);
+        _seed = seed;
         _scale = scale;
+
+        _noiseGenerator = new FastNoise("FractalFBm");
+        _noiseGenerator.Set("Source", new FastNoise("Simplex"));
+        _noiseGenerator.Set("Gain", 0.5f);
+        _noiseGenerator.Set("Octaves", 5);
+        _noiseGenerator.Set("Lacunarity", 2f);
     }
 
     public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions)
     {
         var chunk = new Chunk(position, dimensions);
-        var worldPosition = position * dimensions;
-        
-        for (var x = 0; x < dimensions.X; x++)
-        for (var y = 0; y < dimensions.Y; y++)
-        for (var z = 0; z < dimensions.Z; z++)
+
+        var xSize = (int) dimensions.X;
+        var ySize = (int) dimensions.Y;
+        var zSize = (int) dimensions.Z;
+        var xStart = xSize * (int) position.X;
+        var yStart = ySize * (int) position.Y;
+        var zStart = zSize * (int) position.Z;
+
+        var noiseData = new float[xSize * ySize * zSize];
+        _noiseGenerator.GenUniformGrid3D(noiseData, xStart, yStart, zStart, xSize, ySize, zSize, _scale, _seed);
+        for (var x = 0; x < xSize; x++)
+        for (var y = 0; y < zSize; y++)
+        for (var z = 0; z < zSize; z++)
         {
+            var idx = (z * ySize * xSize) + (y * xSize) + x;
+            var value = noiseData[idx];
+
             var blockPosition = new Vector3(x, y, z);
-            var genPos = (worldPosition + blockPosition) * _scale;
-            var value = _noiseFunction.GetValue(genPos.X, genPos.Y, genPos.Z);
             var blockType = value > 0 ? BlockType.Stone : BlockType.Air;
             var blockColor = new Vector4(blockPosition * 256 / dimensions, 255);
             chunk.SetBlock(x, y, z, new Block(blockPosition, blockType, blockColor));
