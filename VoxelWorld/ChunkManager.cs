@@ -10,7 +10,7 @@ public class ChunkManager
     private Vector3 _loadPosition;
     private int _loadRadius;
     private readonly Frustum _viewFrustum;
-
+    private readonly HashSet<Vector3> _chunksToUnload;
 
     public ChunkManager(World world)
     {
@@ -18,6 +18,7 @@ public class ChunkManager
         _loadPosition = Vector3.Zero;
         _loadRadius = -1;
         _viewFrustum = new Frustum();
+        _chunksToUnload = new HashSet<Vector3>();
     }
 
     public void LoadChunksAroundPosition(Vector3 position, int radius)
@@ -33,6 +34,7 @@ public class ChunkManager
         for (var z = -radius; z <= radius; z++)
         {
             var chunkPos = position + new Vector3(x, y, z);
+            _chunksToUnload.Remove(chunkPos);
             if (!_world.ChunkIsLoaded(chunkPos) && !_world.ChunkIsLoading(chunkPos))
                 chunksToLoad.Add(chunkPos);
         }
@@ -43,23 +45,36 @@ public class ChunkManager
             _world.LoadChunk(chunkPos);
 
         // Unload any chunks outside of the radius
-        // TODO: This doesn't unload chunks that are currently loading!
         foreach (var chunkPos in _world.GetLoadedChunkPositions())
-        {
-            if (chunkPos.X < position.X - radius || chunkPos.X > position.X + radius ||
-                chunkPos.Y < position.Y - radius || chunkPos.Y > position.Y + radius ||
-                chunkPos.Z < position.Z - radius || chunkPos.Z > position.Z + radius)
-            {
+            if (!PointInRadius(position, radius, chunkPos))
                 _world.UnloadChunk(chunkPos);
-            }
-        }
+
+        foreach (var chunkPos in _world.GetLoadingChunkPositions())
+            if (!PointInRadius(position, radius, chunkPos))
+                _chunksToUnload.Add(chunkPos);
+    }
+
+    private bool PointInRadius(Vector3 center, int radius, Vector3 point)
+    {
+        return center.X - radius <= point.X && point.X <= center.X + radius &&
+               center.Y - radius <= point.Y && point.Y <= center.Y + radius &&
+               center.Z - radius <= point.Z && point.Z <= center.Z + radius;
     }
 
     public void Update()
     {
-        var loaded = _world.GetLoadedChunkPositions().ToList().Count;
-        var loading = _world.GetLoadingChunkPositions().ToList().Count;
-        Console.WriteLine($"Loaded chunks: {loaded}/{loaded + loading} ({loaded}, {loading})");
+        var removedChunks = new List<Vector3>();
+        foreach (var chunkPos in _chunksToUnload)
+        {
+            if (_world.ChunkIsLoaded(chunkPos) && !_world.ChunkIsLoading(chunkPos))
+            {
+                _world.UnloadChunk(chunkPos);
+                removedChunks.Add(chunkPos);
+            }
+        }
+
+        foreach (var chunkPos in removedChunks)
+            _chunksToUnload.Remove(chunkPos);
     }
 
     public void Render()
