@@ -28,8 +28,8 @@ internal static class Program
 
         var camera = new Camera3D
         {
-            position = new Vector3(0, 56, 0),
-            target = Vector3.Zero,
+            position = new Vector3(0, 32, 0),
+            target = Vector3.UnitX,
             up = Vector3.UnitY,
             fovy = 60,
             projection = CameraProjection.CAMERA_PERSPECTIVE
@@ -43,19 +43,13 @@ internal static class Program
 
         while (!Raylib.WindowShouldClose())
         {
+            UpdateCamera(ref camera);
             foreach (var layer in uiLayers)
                 layer.Update();
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.BLACK);
 
-            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
-            {
-                Raylib.DisableCursor();
-                Raylib.UpdateCamera(ref camera);
-            }
-            else Raylib.EnableCursor();
-            
             Raylib.BeginMode3D(camera);
             chunkManager.Update(camera.position);
             chunkManager.Render();
@@ -73,5 +67,53 @@ internal static class Program
 
         ImGuiController.Shutdown();
         Raylib.CloseWindow();
+    }
+
+    private static void UpdateCamera(ref Camera3D camera)
+    {
+        // Read camera stuffs
+        var position = camera.position;
+        var forward = Vector3.Normalize(camera.target - position);
+        var up = camera.up;
+        var right = Vector3.Cross(forward, up);
+        var rotation = new Vector3(
+            MathF.Asin(-forward.Y) * 180f / MathF.PI,
+            MathF.Atan2(forward.X, forward.Z) * 180f / MathF.PI,
+            0f
+        );
+
+        // Handle inputs
+        const float mouseSensitivity = 0.25f;
+        if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+        {
+            var mouseDelta = Raylib.GetMouseDelta();
+            rotation.X += mouseDelta.Y * mouseSensitivity;
+            rotation.Y += mouseDelta.X * -mouseSensitivity;
+            Raylib.DisableCursor();
+        }
+        else Raylib.EnableCursor();
+
+        var move = Vector3.Zero;
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_W)) move.Z += 1;
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_S)) move.Z -= 1;
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_Q)) move.Y += 1;
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_E)) move.Y -= 1;
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_D)) move.X += 1;
+        if (Raylib.IsKeyDown(KeyboardKey.KEY_A)) move.X -= 1;
+
+        const float moveSpeed = 10f;
+        var speedMultiplier = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? 2.0f : 1.0f;
+        if (move.LengthSquared() > 0) move = Vector3.Normalize(move);
+        position += right * (move.X * moveSpeed * speedMultiplier * Raylib.GetFrameTime());
+        position += forward * (move.Z * moveSpeed * speedMultiplier * Raylib.GetFrameTime());
+        position += up * (move.Y * moveSpeed * speedMultiplier * Raylib.GetFrameTime());
+
+        // Write camera stuffs
+        var pitch = rotation.X * MathF.PI / 180f;
+        var yaw = rotation.Y * MathF.PI / 180f;
+        forward = new Vector3(MathF.Sin(yaw) * MathF.Cos(pitch), -MathF.Sin(pitch), MathF.Cos(yaw) * MathF.Cos(pitch));
+
+        camera.position = position;
+        camera.target = position + forward;
     }
 }
