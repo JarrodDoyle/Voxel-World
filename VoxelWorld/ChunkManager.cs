@@ -6,32 +6,33 @@ namespace VoxelWorld;
 
 public class ChunkManager
 {
+    public int LoadRadius;
     private readonly World _world;
-    private Vector3 _loadPosition;
-    private int _loadRadius;
+    private Vector3 _loadedPosition;
+    private int _loadedRadius;
     private readonly Frustum _viewFrustum;
     private readonly HashSet<Vector3> _chunksToUnload;
 
     public ChunkManager(World world)
     {
         _world = world;
-        _loadPosition = Vector3.Zero;
-        _loadRadius = -1;
+        _loadedPosition = Vector3.Zero;
+        LoadRadius = 1;
         _viewFrustum = new Frustum();
         _chunksToUnload = new HashSet<Vector3>();
     }
 
-    public void LoadChunksAroundPosition(Vector3 position, int radius)
+    public void LoadChunksAroundPosition(Vector3 position)
     {
-        if (position == _loadPosition && radius == _loadRadius) return;
-        _loadPosition = position;
-        _loadRadius = radius;
+        if (position == _loadedPosition && LoadRadius == _loadedRadius) return;
+        _loadedPosition = position;
+        _loadedRadius = LoadRadius;
 
         // Build list of chunks that need loading
         var chunksToLoad = new List<Vector3>();
-        for (var x = -radius; x <= radius; x++)
-        for (var y = -radius; y <= radius; y++)
-        for (var z = -radius; z <= radius; z++)
+        for (var x = -LoadRadius; x <= LoadRadius; x++)
+        for (var y = -LoadRadius; y <= LoadRadius; y++)
+        for (var z = -LoadRadius; z <= LoadRadius; z++)
         {
             var chunkPos = position + new Vector3(x, y, z);
             _chunksToUnload.Remove(chunkPos);
@@ -46,11 +47,11 @@ public class ChunkManager
 
         // Unload any chunks outside of the radius
         foreach (var chunkPos in _world.GetLoadedChunkPositions())
-            if (!PointInRadius(position, radius, chunkPos))
+            if (!PointInRadius(position, LoadRadius, chunkPos))
                 _world.UnloadChunk(chunkPos);
 
         foreach (var chunkPos in _world.GetLoadingChunkPositions())
-            if (!PointInRadius(position, radius, chunkPos))
+            if (!PointInRadius(position, LoadRadius, chunkPos))
                 _chunksToUnload.Add(chunkPos);
     }
 
@@ -61,8 +62,16 @@ public class ChunkManager
                center.Z - radius <= point.Z && point.Z <= center.Z + radius;
     }
 
-    public void Update()
+    public void Update(Vector3 cameraPosition)
     {
+        var chunkDims = _world.ChunkDimensions;
+        var cameraChunkPos = new Vector3(
+            MathF.Floor(cameraPosition.X / chunkDims.X),
+            MathF.Floor(cameraPosition.Y / chunkDims.Y),
+            MathF.Floor(cameraPosition.Z / chunkDims.Z)
+        );
+        LoadChunksAroundPosition(cameraChunkPos);
+        
         var removedChunks = new List<Vector3>();
         foreach (var chunkPos in _chunksToUnload)
         {

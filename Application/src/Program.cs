@@ -37,9 +37,9 @@ internal static class Program
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FREE);
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FIRST_PERSON);
 
-        const int radius = 8;
         var world = new World((int) DateTime.Now.ToBinary(), 0, new Vector3(16));
         var chunkManager = new ChunkManager(world);
+        chunkManager.LoadRadius = 8;
 
         while (!Raylib.WindowShouldClose())
         {
@@ -53,16 +53,11 @@ internal static class Program
             {
                 Raylib.DisableCursor();
                 Raylib.UpdateCamera(ref camera);
-                var pos = new Vector3(
-                    MathF.Floor(camera.position.X / 16),
-                    MathF.Floor(camera.position.Y / 16),
-                    MathF.Floor(camera.position.Z / 16));
-                chunkManager.LoadChunksAroundPosition(pos, radius);
             }
             else Raylib.EnableCursor();
             
             Raylib.BeginMode3D(camera);
-            chunkManager.Update();
+            chunkManager.Update(camera.position);
             chunkManager.Render();
             Raylib.EndMode3D();
 
