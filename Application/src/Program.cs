@@ -37,7 +37,7 @@ internal static class Program
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FREE);
         Raylib.SetCameraMode(camera, CameraMode.CAMERA_FIRST_PERSON);
 
-        var world = new World((int) DateTime.Now.ToBinary(), 0, new Vector3(16));
+        var world = new World((int) DateTime.Now.ToBinary(), 2, new Vector3(16));
         var chunkManager = new ChunkManager(world);
         chunkManager.LoadRadius = 8;
 
