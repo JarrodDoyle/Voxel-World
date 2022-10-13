@@ -20,7 +20,12 @@ public class World
         _loadingChunks = new ConcurrentDictionary<Vector3, byte>();
 
         const float scale = 1 / 64f;
-        _generator = worldType == 0 ? new Simplex2dWorld(seed, scale) : new Simplex3dWorld(seed, scale);
+        _generator = worldType switch
+        {
+            0 => new Simplex2dWorld(seed, scale),
+            1 => new Simplex3dWorld(seed, scale),
+            _ => throw new ArgumentOutOfRangeException(nameof(worldType), worldType, null)
+        };
     }
 
     /// <summary>
@@ -31,7 +36,7 @@ public class World
     {
         return _chunks.Keys;
     }
-    
+
     /// <summary>
     /// Gets the currently loading chunk world positions as an enumerable collection.
     /// </summary>
@@ -40,7 +45,7 @@ public class World
     {
         return _loadingChunks.Keys;
     }
-    
+
     /// <summary>
     /// Determines whether the data of the chunk at the specified position is loaded.
     /// </summary>
@@ -50,7 +55,7 @@ public class World
     {
         return _chunks.ContainsKey(chunkPosition);
     }
-    
+
     /// <summary>
     /// Determines whether the data of the chunk at the specified position is currently loading.
     /// </summary>
@@ -73,7 +78,7 @@ public class World
     {
         var alreadyLoading = !_loadingChunks.TryAdd(chunkPosition, 0);
         if (alreadyLoading) return;
-        
+
         Task.Run(() =>
         {
             var chunk = _generator.GenerateChunk(chunkPosition, ChunkDimensions);
