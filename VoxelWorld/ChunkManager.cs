@@ -32,21 +32,16 @@ public class ChunkManager
 
         // Build list of chunks that need loading
         var chunksToLoad = new List<Vector3>();
-        for (int x = -radius; x <= radius; x++)
-        for (int y = -radius; y <= radius; y++)
-        for (int z = -radius; z <= radius; z++)
+        for (var x = -radius; x <= radius; x++)
+        for (var y = -radius; y <= radius; y++)
+        for (var z = -radius; z <= radius; z++)
         {
             var chunkPos = position + new Vector3(x, y, z);
-            var loaded = _world.ChunkIsLoaded(chunkPos);
-            var loading = _world.ChunkIsLoading(chunkPos);
-
-            if (loaded && !_loadedChunks.Contains(chunkPos))
+            if (_world.ChunkIsLoaded(chunkPos))
                 _loadedChunks.Add(chunkPos);
-
-            if (loading && !_loadingChunks.Contains(chunkPos))
+            else if (_world.ChunkIsLoading(chunkPos))
                 _loadingChunks.Add(chunkPos);
-
-            if (!loaded && !loading && !_loadingChunks.Contains(chunkPos))
+            else
             {
                 chunksToLoad.Add(chunkPos);
                 _loadingChunks.Add(chunkPos);
@@ -59,6 +54,7 @@ public class ChunkManager
             _world.LoadChunk(chunkPos);
 
         // Unload any chunks outside of the radius
+        // TODO: This doesn't unload chunks that are currently loading!
         var chunksToUnload = new List<Vector3>();
         foreach (var chunkPos in _loadedChunks)
         {
@@ -87,6 +83,10 @@ public class ChunkManager
 
         foreach (var chunkPos in loadingChunksToRemove)
             _loadingChunks.Remove(chunkPos);
+
+        var loaded = _loadedChunks.Count;
+        var loading = _loadingChunks.Count;
+        Console.WriteLine($"Loaded chunks: {loaded}/{loaded + loading} ({loaded}, {loading})");
     }
 
     public void Render()
