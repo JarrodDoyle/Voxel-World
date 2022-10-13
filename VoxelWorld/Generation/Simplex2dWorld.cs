@@ -22,8 +22,6 @@ public class Simplex2dWorld : WorldGenerator
 
     public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions)
     {
-        var startTime = DateTime.Now;
-
         var chunk = new Chunk(position, dimensions);
 
         var xSize = (int) dimensions.X;
@@ -48,8 +46,6 @@ public class Simplex2dWorld : WorldGenerator
                 chunk.SetBlock(x, y, z, new Block(blockPosition, blockType, blockColor));
             }
         }
-
-        Console.WriteLine(DateTime.Now - startTime);
 
         return chunk;
     }
