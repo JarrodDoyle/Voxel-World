@@ -22,6 +22,24 @@ public class World
         const float scale = 1 / 64f;
         _generator = worldType == 0 ? new Simplex2dWorld(seed, scale) : new Simplex3dWorld(seed, scale);
     }
+
+    /// <summary>
+    /// Gets the currently loaded chunk world positions as an enumerable collection.
+    /// </summary>
+    /// <returns>Enumerable collection of the currently loaded chunk world positions</returns>
+    public IEnumerable<Vector3> GetLoadedChunkPositions()
+    {
+        return _chunks.Keys;
+    }
+    
+    /// <summary>
+    /// Gets the currently loading chunk world positions as an enumerable collection.
+    /// </summary>
+    /// <returns>Enumerable collection of the currently loading chunk world positions</returns>
+    public IEnumerable<Vector3> GetLoadingChunkPositions()
+    {
+        return _loadingChunks.Keys;
+    }
     
     /// <summary>
     /// Determines whether the data of the chunk at the specified position is loaded.
