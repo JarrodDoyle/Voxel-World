@@ -24,6 +24,7 @@ public class World
         {
             0 => new Simplex2dWorld(seed, scale),
             1 => new Simplex3dWorld(seed, scale),
+            2 => new Overworld(seed, scale),
             _ => throw new ArgumentOutOfRangeException(nameof(worldType), worldType, null)
         };
     }
