@@ -12,21 +12,26 @@ public class Chunk
     private bool _dirty;
     private Task<Mesh?>? _modelGenTask;
     private Model? _model;
+    private readonly World _world;
 
-    public Chunk(Vector3 position, Vector3 dimensions)
+    public Chunk(Vector3 position, Vector3 dimensions, World world)
     {
         _position = position;
         _dimensions = dimensions;
         _blocks = new Block[(int) dimensions.X, (int) dimensions.Y, (int) dimensions.Z];
         _dirty = false;
+        _world = world;
     }
 
-    public Block? GetBlock(Vector3 pos)
+    public Block GetBlock(Vector3 pos)
     {
-        return PosInChunk(pos) ? _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z] : null;
+        if (PosInChunk(pos))
+            return _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z];
+        var block = _world.GetBlock((_position * _dimensions) + pos);
+        return block;
     }
 
-    public Block? GetBlock(int x, int y, int z)
+    public Block GetBlock(int x, int y, int z)
     {
         return GetBlock(new Vector3(x, y, z));
     }
@@ -57,6 +62,7 @@ public class Chunk
 
         Raylib.UnloadModel((Model) _model);
         _model = null;
+        _dirty = true;
     }
 
     public void Render()
@@ -116,7 +122,7 @@ public class Chunk
         var indices = new List<ushort>();
         var colours = new List<byte>();
 
-        var neighbours = new Block?[6];
+        var neighbours = new Block[6];
         var vertIdxMap = new int[8];
 
         foreach (var block in _blocks)
@@ -141,9 +147,8 @@ public class Chunk
             for (int i = 0; i < 6; i++)
             {
                 // Ignore neighbours that aren't air
-                // If the neighbour is in another chunk (null) then we add the face
                 var neighbour = neighbours[i];
-                if (neighbour != null && neighbour.BlockType != BlockType.Air) continue;
+                if (neighbour.BlockType != BlockType.Air) continue;
 
                 for (int j = 0; j < 6; j++)
                 {

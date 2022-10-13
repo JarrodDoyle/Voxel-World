@@ -82,7 +82,7 @@ public class World
 
         Task.Run(() =>
         {
-            var chunk = _generator.GenerateChunk(chunkPosition, ChunkDimensions);
+            var chunk = _generator.GenerateChunk(chunkPosition, ChunkDimensions, this);
             if (ChunkIsLoaded(chunkPosition))
             {
                 var oldChunk = _chunks[chunkPosition];
@@ -127,7 +127,20 @@ public class World
     /// <returns>The loaded <c>Chunk</c> if successfully found; otherwise, <c>null</c>.</returns>
     public Chunk? GetChunk(Vector3 chunkPosition)
     {
-        _chunks.TryGetValue(chunkPosition, out var chunk);
-        return chunk;
+        return _chunks.ContainsKey(chunkPosition) ? _chunks[chunkPosition] : null;
+    }
+
+    public Block GetBlock(Vector3 blockWorldPosition)
+    {
+        var chunkPos = new Vector3(
+            MathF.Floor(blockWorldPosition.X / ChunkDimensions.X),
+            MathF.Floor(blockWorldPosition.Y / ChunkDimensions.Y),
+            MathF.Floor(blockWorldPosition.Z / ChunkDimensions.Z));
+        var localPos = blockWorldPosition - chunkPos * ChunkDimensions;
+
+        var chunk = GetChunk(chunkPos);
+        if (chunk != null)
+            return chunk.GetBlock(localPos);
+        return _generator.GenerateBlock(blockWorldPosition);
     }
 }

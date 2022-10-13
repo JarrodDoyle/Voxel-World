@@ -20,9 +20,9 @@ public class Simplex2dWorld : WorldGenerator
         _noiseGenerator.Set("Lacunarity", 2f);
     }
 
-    public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions)
+    public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions, World world)
     {
-        var chunk = new Chunk(position, dimensions);
+        var chunk = new Chunk(position, dimensions, world);
 
         var xSize = (int) dimensions.X;
         var ySize = (int) dimensions.Y;
@@ -48,5 +48,18 @@ public class Simplex2dWorld : WorldGenerator
         }
 
         return chunk;
+    }
+
+    public override Block GenerateBlock(Vector3 worldPosition)
+    {
+        var x = (int) worldPosition.X;
+        var y = (int) worldPosition.Y;
+        var z = (int) worldPosition.Z;
+        
+        var value = _noiseGenerator.GenSingle2D(x * _scale, z * _scale, _seed);
+        var blockType = y < 32 + 20 * value ? BlockType.Stone : BlockType.Air;
+        var blockPosition = new Vector3(x, y, z);
+        var blockColor = new Vector4(255);
+        return new Block(blockPosition, blockType, blockColor);
     }
 }

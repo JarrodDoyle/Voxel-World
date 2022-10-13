@@ -20,9 +20,9 @@ public class Simplex3dWorld : WorldGenerator
         _noiseGenerator.Set("Lacunarity", 2f);
     }
 
-    public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions)
+    public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions, World world)
     {
-        var chunk = new Chunk(position, dimensions);
+        var chunk = new Chunk(position, dimensions, world);
 
         var xSize = (int) dimensions.X;
         var ySize = (int) dimensions.Y;
@@ -41,11 +41,24 @@ public class Simplex3dWorld : WorldGenerator
             var value = noiseData[idx];
 
             var blockPosition = new Vector3(x, y, z);
-            var blockType = value > 0 ? BlockType.Stone : BlockType.Air;
+            var blockType = value > 0 ? BlockType.Air : BlockType.Stone;
             var blockColor = new Vector4(blockPosition * 256 / dimensions, 255);
             chunk.SetBlock(x, y, z, new Block(blockPosition, blockType, blockColor));
         }
 
         return chunk;
+    }
+
+    public override Block GenerateBlock(Vector3 worldPosition)
+    {
+        var x = (int) worldPosition.X;
+        var y = (int) worldPosition.Y;
+        var z = (int) worldPosition.Z;
+
+        var value = _noiseGenerator.GenSingle3D(x * _scale, y * _scale, z * _scale, _seed);
+        var blockType = value > 0 ? BlockType.Air : BlockType.Stone;
+        var blockPosition = new Vector3(x, y, z);
+        var blockColor = new Vector4(255);
+        return new Block(blockPosition, blockType, blockColor);
     }
 }

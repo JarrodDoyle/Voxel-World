@@ -12,15 +12,15 @@ public class Overworld : WorldGenerator
     {
         _seed = seed;
         _scale = scale;
-        
+
         _noiseGenerator = FastNoise.FromEncodedNodeTree(
             "HgATAJqZmT4aAAERAAIAAAAAAOBAEAAAAIhBHwAWAAEAAAALAAMAAAACAAAAAwAAAAQAAAAAAAAAPwEUAP//AAAAAAAAPwAAAAA/AAAAAD8AAAAAPwEXAAAAgL8AAIA/PQoXQFK4HkATAAAAoEAGAACPwnU8AJqZmT4AAAAAAADhehQ/AREAAgAAAAAAIEAQAAAAAEAZABMAw/UoPw0ABAAAAAAAIEAJAABmZiY/AAAAAD8BBAAAAAAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADNzEw+ADMzMz8AAAAAPw=="
         );
     }
 
-    public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions)
+    public override Chunk GenerateChunk(Vector3 position, Vector3 dimensions, World world)
     {
-        var chunk = new Chunk(position, dimensions);
+        var chunk = new Chunk(position, dimensions, world);
 
         var xSize = (int) dimensions.X;
         var ySize = (int) dimensions.Y;
@@ -45,5 +45,18 @@ public class Overworld : WorldGenerator
         }
 
         return chunk;
+    }
+
+    public override Block GenerateBlock(Vector3 worldPosition)
+    {
+        var x = (int) worldPosition.X;
+        var y = (int) worldPosition.Y;
+        var z = (int) worldPosition.Z;
+
+        var value = _noiseGenerator.GenSingle3D(x * _scale, y * _scale, z * _scale, _seed);
+        var blockType = value > 0 ? BlockType.Air : BlockType.Stone;
+        var blockPosition = new Vector3(x, y, z);
+        var blockColor = new Vector4(255);
+        return new Block(blockPosition, blockType, blockColor);
     }
 }
