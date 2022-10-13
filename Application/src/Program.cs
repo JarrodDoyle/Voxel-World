@@ -43,7 +43,7 @@ internal static class Program
 
         while (!Raylib.WindowShouldClose())
         {
-            UpdateCamera(ref camera);
+            UpdateCamera(ref camera, chunkManager);
             foreach (var layer in uiLayers)
                 layer.Update();
 
@@ -62,6 +62,9 @@ internal static class Program
             ImGuiController.End();
 
             Raylib.DrawFPS(0, 0);
+            var camPos = camera.position;
+            Raylib.DrawText($"({(int) camPos.X}, {(int) camPos.Y}, {(int) camPos.Z})", 0, 20,
+                Raylib.GetFontDefault().baseSize * 2, Color.WHITE);
             Raylib.EndDrawing();
         }
 
@@ -69,7 +72,7 @@ internal static class Program
         Raylib.CloseWindow();
     }
 
-    private static void UpdateCamera(ref Camera3D camera)
+    private static void UpdateCamera(ref Camera3D camera, ChunkManager chunkManager)
     {
         // Read camera stuffs
         var position = camera.position;
@@ -115,5 +118,8 @@ internal static class Program
 
         camera.position = position;
         camera.target = position + forward;
+
+        // Chunk Manager stuffs
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_B)) chunkManager.RebuildMeshes();
     }
 }

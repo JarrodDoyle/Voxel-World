@@ -102,4 +102,12 @@ public class ChunkManager
         var max = min + _world.ChunkDimensions;
         return _viewFrustum.AabbInside(new BoundingBox(min, max));
     }
+
+    public void RebuildMeshes()
+    {
+        foreach (var chunkPosition in _world.GetLoadedChunkPositions())
+        {
+            _world.UnloadChunkModel(chunkPosition);
+        }
+    }
 }
