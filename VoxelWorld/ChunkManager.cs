@@ -9,9 +9,9 @@ public class ChunkManager
     private readonly World _world;
     private Vector3 _loadPosition;
     private int _loadRadius;
-    private readonly List<Vector3> _loadedChunks;
-    private readonly List<Vector3> _loadingChunks;
-    private Frustum _viewFrustum;
+    private readonly HashSet<Vector3> _loadedChunks;
+    private readonly HashSet<Vector3> _loadingChunks;
+    private readonly Frustum _viewFrustum;
 
 
     public ChunkManager(World world)
@@ -19,8 +19,8 @@ public class ChunkManager
         _world = world;
         _loadPosition = Vector3.Zero;
         _loadRadius = -1;
-        _loadedChunks = new List<Vector3>();
-        _loadingChunks = new List<Vector3>();
+        _loadedChunks = new HashSet<Vector3>();
+        _loadingChunks = new HashSet<Vector3>();
         _viewFrustum = new Frustum();
     }
 
@@ -57,7 +57,6 @@ public class ChunkManager
         chunksToLoad = chunksToLoad.OrderBy(chunkPos => (chunkPos - position).LengthSquared()).ToList();
         foreach (var chunkPos in chunksToLoad)
             _world.LoadChunk(chunkPos);
-
 
         // Unload any chunks outside of the radius
         var chunksToUnload = new List<Vector3>();

@@ -10,14 +10,14 @@ public class World
     public Vector3 ChunkDimensions { get; }
     private readonly WorldGenerator _generator;
     private readonly ConcurrentDictionary<Vector3, Chunk> _chunks;
-    private readonly List<Vector3> _loadingChunks;
+    private readonly ConcurrentDictionary<Vector3, byte> _loadingChunks;
 
     public World(int seed, int worldType, Vector3 dimensions)
     {
         Seed = seed;
         ChunkDimensions = dimensions;
         _chunks = new ConcurrentDictionary<Vector3, Chunk>();
-        _loadingChunks = new List<Vector3>();
+        _loadingChunks = new ConcurrentDictionary<Vector3, byte>();
 
         const float scale = 1 / 64f;
         _generator = worldType == 0 ? new Simplex2dWorld(seed, scale) : new Simplex3dWorld(seed, scale);
@@ -40,7 +40,7 @@ public class World
     /// <returns><c>true</c> if the chunk data is currently loading; otherwise, <c>false</c>.</returns>
     public bool ChunkIsLoading(Vector3 chunkPosition)
     {
-        return _loadingChunks.Contains(chunkPosition);
+        return _loadingChunks.ContainsKey(chunkPosition);
     }
 
     /// <summary>
@@ -48,14 +48,14 @@ public class World
     /// </summary>
     /// <param name="chunkPosition">The world position of the chunk to load data for.</param>
     /// <remarks>
-    /// If chunk data for the specified position is already loaded it is overwritten.
-    /// Currently this just generates the chunk, no data is stored on disk.
+    /// If chunk data for the specified position is already loaded it is overwritten. If the chunk is mid-load then an
+    /// early return occurs and no new data is loaded. Currently this just generates the chunk, no data is stored on disk.
     /// </remarks>
     public void LoadChunk(Vector3 chunkPosition)
     {
-        // TODO: _loadingChunks doesn't end up empty oh no
-        // TODO: Limit the number of active tasks? idk
-        _loadingChunks.Add(chunkPosition);
+        var alreadyLoading = !_loadingChunks.TryAdd(chunkPosition, 0);
+        if (alreadyLoading) return;
+        
         Task.Run(() =>
         {
             var chunk = _generator.GenerateChunk(chunkPosition, ChunkDimensions);
@@ -67,7 +67,7 @@ public class World
             }
             else _chunks.TryAdd(chunkPosition, chunk);
 
-            _loadingChunks.Remove(chunkPosition);
+            _loadingChunks.Remove(chunkPosition, out _);
         });
     }
 
