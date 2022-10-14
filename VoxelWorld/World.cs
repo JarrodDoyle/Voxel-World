@@ -19,7 +19,7 @@ public class World
         _chunks = new ConcurrentDictionary<Vector3, Chunk>();
         _loadingChunks = new ConcurrentDictionary<Vector3, byte>();
 
-        const float scale = 1 / 64f;
+        const float scale = 0.005f;
         _generator = worldType switch
         {
             0 => new Simplex2dWorld(seed, scale),
