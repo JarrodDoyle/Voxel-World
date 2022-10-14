@@ -1,6 +1,6 @@
 namespace Application.Ui;
 
-public abstract class UiLayer
+public abstract class Panel
 {
     public bool Open { get; set; }
 

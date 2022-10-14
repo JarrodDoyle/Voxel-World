@@ -5,7 +5,7 @@ using Raylib_cs;
 
 namespace Application.Ui;
 
-public static class ImGuiController
+public static class ImGuiBackend
 {
     private static IntPtr _imGuiContext = IntPtr.Zero;
     private static ImGuiMouseCursor _currentMouseCursor = ImGuiMouseCursor.COUNT;
@@ -68,7 +68,7 @@ public static class ImGuiController
         _mouseCursorMap[ImGuiMouseCursor.NotAllowed] = MouseCursor.MOUSE_CURSOR_NOT_ALLOWED;
     }
 
-    private static unsafe void ReloadFonts()
+    public static unsafe void ReloadFonts()
     {
         ImGui.SetCurrentContext(_imGuiContext);
         ImGuiIOPtr io = ImGui.GetIO();

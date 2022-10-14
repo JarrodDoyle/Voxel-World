@@ -20,11 +20,7 @@ internal static class Program
     private static void Main(string[] args)
     {
         InitWindow(1280, 720, "Raylib + Dear ImGui app");
-
-        ImGuiController.Setup();
-        var uiLayers = new List<UiLayer> {new GeneratorLayer {Open = true}};
-        foreach (var layer in uiLayers)
-            layer.Attach();
+        UiManager.Setup();
 
         var camera = new Camera3D
         {
@@ -44,8 +40,7 @@ internal static class Program
         while (!Raylib.WindowShouldClose())
         {
             UpdateCamera(ref camera, chunkManager);
-            foreach (var layer in uiLayers)
-                layer.Update();
+            UiManager.Update();
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.BLACK);
@@ -55,12 +50,7 @@ internal static class Program
             chunkManager.Render();
             Raylib.EndMode3D();
 
-            ImGuiController.Begin();
-            ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
-            foreach (var layer in uiLayers)
-                layer.Render();
-            ImGuiController.End();
-
+            UiManager.Render();
             Raylib.DrawFPS(0, 0);
             var camPos = camera.position;
             Raylib.DrawText($"({(int) camPos.X}, {(int) camPos.Y}, {(int) camPos.Z})", 0, 20,
@@ -68,7 +58,7 @@ internal static class Program
             Raylib.EndDrawing();
         }
 
-        ImGuiController.Shutdown();
+        UiManager.Shutdown();
         Raylib.CloseWindow();
     }
 

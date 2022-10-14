@@ -4,18 +4,20 @@ using ImGuiNET;
 
 namespace Application.Ui;
 
-public class GeneratorLayer : UiLayer
+public class GeneratorLayer : Panel
 {
     private Vector3 _centerPos = Vector3.Zero;
     
     public override void Attach()
     {
         Console.WriteLine("Attached layer");
+        Open = true;
     }
 
     public override void Detach()
     {
         Console.WriteLine("Detached layer");
+        Open = false;
     }
 
     public override void Render()
@@ -46,7 +48,7 @@ public class GeneratorLayer : UiLayer
         //
         // ImGui.End();
 
-        Open = isOpen;
+        if (!isOpen) Detach();
     }
 
     public override void Update()
