@@ -19,7 +19,7 @@ internal static class Program
 
     private static void Main(string[] args)
     {
-        InitWindow(1280, 720, "Raylib + Dear ImGui app");
+        InitWindow(1280, 720, "Voxel World");
         UiManager.Setup();
 
         var camStartPos = new Vector3(0, 16, 0);
