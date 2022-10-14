@@ -115,6 +115,9 @@ public class Chunk
         6, 2, 3, 3, 2, 0, // West
     };
 
+    private const float AmbientStrength = 0.25f;
+    private static readonly Vector3 AmbientDir = new(1, 3, 2);
+
     // TODO: This probably shouldn't be in this file
     private Mesh? GenerateMesh()
     {
@@ -125,12 +128,24 @@ public class Chunk
         var neighbours = new Block[6];
         var vertIdxMap = new int[8];
 
+        // Calculate ambient colours
+        var light =
+            Vector3.Abs(Vector3.Normalize(AmbientDir) * (1.0f - AmbientStrength) + new Vector3(AmbientStrength));
+        var ambientMultipliers = new float[6];
+        ambientMultipliers[0] = light.Y;
+        ambientMultipliers[1] = 1 - light.Y;
+        ambientMultipliers[2] = light.Z;
+        ambientMultipliers[3] = 1 - light.Z;
+        ambientMultipliers[4] = light.X;
+        ambientMultipliers[5] = 1 - light.X;
+
+        var indicesIdx = 0;
+
         foreach (var block in _blocks)
         {
             if (block.BlockType == BlockType.Air) continue;
 
             var pos = block.Position;
-            var startIdx = verticesVec3.Count;
 
             // Get all the neighbouring blocks
             neighbours[0] = GetBlock(pos with {Y = pos.Y + 1});
@@ -140,37 +155,40 @@ public class Chunk
             neighbours[4] = GetBlock(pos with {X = pos.X + 1});
             neighbours[5] = GetBlock(pos with {X = pos.X - 1});
 
-            for (int i = 0; i < 8; i++)
-                vertIdxMap[i] = -1;
-
-            int addedVerticesCount = 0;
+            // Iterate over each side neighbour
             for (int i = 0; i < 6; i++)
             {
                 // Ignore neighbours that aren't air
                 var neighbour = neighbours[i];
                 if (neighbour.BlockType != BlockType.Air) continue;
 
-                for (int j = 0; j < 6; j++)
+                var ambient = ambientMultipliers[i];
+
+                // Clear the Vertex -> Index map
+                for (var j = 0; j < 8; j++)
+                    vertIdxMap[j] = -1;
+
+                // We're adding a face so we need to add the four vertices and the 6 indices (2 tris to make the quad)
+                for (var j = 0; j < 6; j++)
                 {
-                    var baseIdx = CubeTriangles[i * 6 + j];
-
-                    // Add the vertex if it's not already added
-                    if (vertIdxMap[baseIdx] == -1)
+                    var ctIdx = CubeTriangles[i * 6 + j];
+                    if (vertIdxMap[ctIdx] == -1)
                     {
-                        vertIdxMap[baseIdx] = addedVerticesCount;
-                        addedVerticesCount++;
-                        verticesVec3.Add(pos + CubeVertices[baseIdx]);
+                        // If we've not got a mapped index for this CubeTriangle vertex we create the mapping and add
+                        // the vertex to the mesh (+ it's other info like vertex colours and UVs (eventually))
+                        vertIdxMap[ctIdx] = indicesIdx;
+                        indicesIdx++;
 
-                        // Add the colour too!
+                        verticesVec3.Add(pos + CubeVertices[ctIdx]);
                         var c = block.Color;
-                        colours.Add((byte) c.X);
-                        colours.Add((byte) c.Y);
-                        colours.Add((byte) c.Z);
+                        colours.Add((byte) (c.X * ambient));
+                        colours.Add((byte) (c.Y * ambient));
+                        colours.Add((byte) (c.Z * ambient));
                         colours.Add(255);
                     }
 
                     // Add the mapped index
-                    indices.Add((ushort) (startIdx + vertIdxMap[baseIdx]));
+                    indices.Add((ushort) vertIdxMap[ctIdx]);
                 }
             }
         }
