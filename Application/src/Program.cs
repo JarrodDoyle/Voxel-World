@@ -22,10 +22,11 @@ internal static class Program
         InitWindow(1280, 720, "Raylib + Dear ImGui app");
         UiManager.Setup();
 
+        var camStartPos = new Vector3(0, 16, 0);
         var camera = new Camera3D
         {
-            position = new Vector3(0, 32, 0),
-            target = Vector3.UnitX,
+            position = camStartPos,
+            target = camStartPos + Vector3.UnitX,
             up = Vector3.UnitY,
             fovy = 60,
             projection = CameraProjection.CAMERA_PERSPECTIVE
