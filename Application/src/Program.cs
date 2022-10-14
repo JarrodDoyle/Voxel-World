@@ -64,6 +64,10 @@ internal static class Program
 
     private static void UpdateCamera(ref Camera3D camera, ChunkManager chunkManager)
     {
+        // Only handle inputs is ImGui doesn't want to
+        var io = ImGui.GetIO();
+        if (io.WantCaptureMouse || io.WantCaptureKeyboard) return;
+        
         // Read camera stuffs
         var position = camera.position;
         var forward = Vector3.Normalize(camera.target - position);
