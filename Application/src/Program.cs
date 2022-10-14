@@ -84,7 +84,7 @@ internal static class Program
         if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
         {
             var mouseDelta = Raylib.GetMouseDelta();
-            rotation.X += mouseDelta.Y * mouseSensitivity;
+            rotation.X = Math.Clamp(rotation.X + (mouseDelta.Y * mouseSensitivity), -85, 85);
             rotation.Y += mouseDelta.X * -mouseSensitivity;
             Raylib.DisableCursor();
         }
