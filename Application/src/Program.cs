@@ -67,7 +67,7 @@ internal static class Program
         // Only handle inputs is ImGui doesn't want to
         var io = ImGui.GetIO();
         if (io.WantCaptureMouse || io.WantCaptureKeyboard) return;
-        
+
         // Read camera stuffs
         var position = camera.position;
         var forward = Vector3.Normalize(camera.target - position);
@@ -115,5 +115,14 @@ internal static class Program
 
         // Chunk Manager stuffs
         if (Raylib.IsKeyPressed(KeyboardKey.KEY_B)) chunkManager.RebuildMeshes();
+
+        // Toggle vsync
+        if (Raylib.IsKeyPressed(KeyboardKey.KEY_V))
+        {
+            if (Raylib.IsWindowState(ConfigFlags.FLAG_VSYNC_HINT))
+                Raylib.ClearWindowState(ConfigFlags.FLAG_VSYNC_HINT);
+            else
+                Raylib.SetWindowState(ConfigFlags.FLAG_VSYNC_HINT);
+        }
     }
 }
