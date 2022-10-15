@@ -43,7 +43,7 @@ public class Simplex3dWorld : WorldGenerator
             var blockPosition = new Vector3(x, y, z);
             var blockType = value > 0 ? BlockType.Air : BlockType.Stone;
             var blockColor = new Vector4(blockPosition * 256 / dimensions, 255);
-            chunk.SetBlock(x, y, z, new Block(blockPosition, blockType, blockColor));
+            chunk.SetBlock(x, y, z, new Block(blockType, blockColor));
         }
 
         return chunk;
@@ -57,8 +57,7 @@ public class Simplex3dWorld : WorldGenerator
 
         var value = _noiseGenerator.GenSingle3D(x * _scale, y * _scale, z * _scale, _seed);
         var blockType = value > 0 ? BlockType.Air : BlockType.Stone;
-        var blockPosition = new Vector3(x, y, z);
         var blockColor = new Vector4(255);
-        return new Block(blockPosition, blockType, blockColor);
+        return new Block(blockType, blockColor);
     }
 }

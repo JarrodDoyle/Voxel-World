@@ -141,11 +141,15 @@ public class Chunk
 
         var indicesIdx = 0;
 
-        foreach (var block in _blocks)
+        // foreach (var block in _blocks)
+        for (var x = 0; x < _dimensions.X; x++)
+        for (var y = 0; y < _dimensions.Y; y++)
+        for (var z = 0; z < _dimensions.Z; z++)
         {
+            var block = _blocks[x, y, z];
             if (block.BlockType == BlockType.Air) continue;
 
-            var pos = block.Position;
+            var pos = new Vector3(x, y, z);
 
             // Get all the neighbouring blocks
             neighbours[0] = GetBlock(pos with {Y = pos.Y + 1});
