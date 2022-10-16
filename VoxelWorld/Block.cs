@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace VoxelWorld;
 
-public class Block
+public readonly struct Block
 {
     private readonly uint _color;
 
