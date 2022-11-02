@@ -52,7 +52,9 @@ public class World
             paletteList.Add(new Vector4(r, g, b, 255));
         }
 
-        Palette = paletteList.ToArray();
+        // We never want to set an empty palette
+        if (paletteList.Count > 0)
+            Palette = paletteList.ToArray();
     }
 
     /// <summary>
