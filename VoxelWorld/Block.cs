@@ -12,9 +12,9 @@ public readonly struct Block
     public BlockType BlockType => (BlockType) _blockType;
     public Vector4 Color => World.Palette[_color];
 
-    public Block(BlockType blockType, Vector4 color)
+    public Block(BlockType blockType, int colorIndex)
     {
         _blockType = (byte) blockType;
-        _color = (byte) ((color.X + color.Y + color.Z) / 12f);
+        _color = (byte) colorIndex;
     }
 }

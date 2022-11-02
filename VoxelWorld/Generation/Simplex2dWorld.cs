@@ -40,10 +40,9 @@ public class Simplex2dWorld : WorldGenerator
             var value = noiseData[idx];
             for (var y = 0; y < ySize; y++)
             {
-                var blockPosition = new Vector3(x, y, z);
                 var blockType = yStart + y < 32 + 20 * value ? BlockType.Stone : BlockType.Air;
-                var blockColor = new Vector4(blockPosition * 256 / dimensions, 255);
-                chunk.SetBlock(x, y, z, new Block(blockType, blockColor));
+                var paletteIdx = (int) ((World.Palette.Length - 1) * (x + y + z) / (float) (xSize + ySize + zSize - 3));
+                chunk.SetBlock(x, y, z, new Block(blockType, paletteIdx));
             }
         }
 
@@ -55,10 +54,9 @@ public class Simplex2dWorld : WorldGenerator
         var x = (int) worldPosition.X;
         var y = (int) worldPosition.Y;
         var z = (int) worldPosition.Z;
-        
+
         var value = _noiseGenerator.GenSingle2D(x * _scale, z * _scale, _seed);
         var blockType = y < 32 + 20 * value ? BlockType.Stone : BlockType.Air;
-        var blockColor = new Vector4(255);
-        return new Block(blockType, blockColor);
+        return new Block(blockType, 0);
     }
 }
