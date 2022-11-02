@@ -12,73 +12,7 @@ public class World
     private readonly ConcurrentDictionary<Vector3, Chunk> _chunks;
     private readonly ConcurrentDictionary<Vector3, byte> _loadingChunks;
 
-    public static Vector4[] Palette =
-    {
-        new(new Vector3(46, 34, 47), 255),
-        new(new Vector3(62, 53, 70), 255),
-        new(new Vector3(98, 85, 101), 255),
-        new(new Vector3(150, 108, 108), 255),
-        new(new Vector3(171, 148, 122), 255),
-        new(new Vector3(105, 79, 98), 255),
-        new(new Vector3(127, 112, 138), 255),
-        new(new Vector3(155, 171, 178), 255),
-        new(new Vector3(199, 220, 208), 255),
-        new(new Vector3(255, 255, 255), 255),
-        new(new Vector3(110, 39, 39), 255),
-        new(new Vector3(179, 56, 49), 255),
-        new(new Vector3(234, 79, 54), 255),
-        new(new Vector3(245, 125, 74), 255),
-        new(new Vector3(174, 35, 52), 255),
-        new(new Vector3(232, 59, 59), 255),
-        new(new Vector3(251, 107, 29), 255),
-        new(new Vector3(247, 150, 23), 255),
-        new(new Vector3(249, 194, 43), 255),
-        new(new Vector3(122, 48, 69), 255),
-        new(new Vector3(158, 69, 57), 255),
-        new(new Vector3(205, 104, 61), 255),
-        new(new Vector3(230, 144, 78), 255),
-        new(new Vector3(251, 185, 84), 255),
-        new(new Vector3(76, 62, 36), 255),
-        new(new Vector3(103, 102, 51), 255),
-        new(new Vector3(162, 169, 71), 255),
-        new(new Vector3(213, 224, 75), 255),
-        new(new Vector3(251, 255, 134), 255),
-        new(new Vector3(22, 90, 76), 255),
-        new(new Vector3(35, 144, 99), 255),
-        new(new Vector3(30, 188, 115), 255),
-        new(new Vector3(145, 219, 105), 255),
-        new(new Vector3(205, 223, 108), 255),
-        new(new Vector3(49, 54, 56), 255),
-        new(new Vector3(55, 78, 74), 255),
-        new(new Vector3(84, 126, 100), 255),
-        new(new Vector3(146, 169, 132), 255),
-        new(new Vector3(178, 186, 144), 255),
-        new(new Vector3(11, 94, 101), 255),
-        new(new Vector3(11, 138, 143), 255),
-        new(new Vector3(14, 175, 155), 255),
-        new(new Vector3(48, 225, 185), 255),
-        new(new Vector3(143, 248, 226), 255),
-        new(new Vector3(50, 51, 83), 255),
-        new(new Vector3(72, 74, 119), 255),
-        new(new Vector3(77, 101, 180), 255),
-        new(new Vector3(77, 155, 230), 255),
-        new(new Vector3(143, 211, 255), 255),
-        new(new Vector3(69, 41, 63), 255),
-        new(new Vector3(107, 62, 117), 255),
-        new(new Vector3(144, 94, 169), 255),
-        new(new Vector3(168, 132, 243), 255),
-        new(new Vector3(234, 173, 237), 255),
-        new(new Vector3(117, 60, 84), 255),
-        new(new Vector3(162, 75, 111), 255),
-        new(new Vector3(207, 101, 127), 255),
-        new(new Vector3(237, 128, 153), 255),
-        new(new Vector3(131, 28, 93), 255),
-        new(new Vector3(195, 36, 84), 255),
-        new(new Vector3(240, 79, 120), 255),
-        new(new Vector3(246, 129, 129), 255),
-        new(new Vector3(252, 167, 144), 255),
-        new(new Vector3(253, 203, 176), 255)
-    };
+    public static Vector4[] Palette = {new(255)};
 
     public World(int seed, int worldType, Vector3 dimensions)
     {
@@ -95,6 +29,30 @@ public class World
             2 => new Overworld(seed, scale),
             _ => throw new ArgumentOutOfRangeException(nameof(worldType), worldType, null)
         };
+    }
+
+    /// <summary>
+    /// Set's the shared world palette
+    /// </summary>
+    /// <remarks>
+    /// Expects a file with a RGB hex value on each line
+    /// </remarks>
+    /// <param name="filepath"></param>
+    public static void LoadPalette(string filepath)
+    {
+        if (!File.Exists(filepath)) return;
+
+        var paletteList = new List<Vector4>();
+        foreach (var line in File.ReadLines(filepath))
+        {
+            var value = int.Parse(line, System.Globalization.NumberStyles.HexNumber);
+            var r = (value >> 16) & 0xFF;
+            var g = (value >> 8) & 0xFF;
+            var b = value & 0xFF;
+            paletteList.Add(new Vector4(r, g, b, 255));
+        }
+
+        Palette = paletteList.ToArray();
     }
 
     /// <summary>

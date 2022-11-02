@@ -17,4 +17,10 @@
       <ProjectReference Include="..\VoxelWorld\VoxelWorld.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="res\**\*.*">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>
