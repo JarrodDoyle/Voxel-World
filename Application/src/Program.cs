@@ -23,7 +23,14 @@ internal static class Program
         UiManager.Setup();
 
         var cameraController = new CameraController(new Vector3(0, 16, 0), 10f, 0.25f);
-        World.LoadPalette("res/palettes/resurrect-64.hex");
+
+        // Load a random palette
+        var palettePaths = Directory.GetFiles("res/palettes/");
+        var paletteIndex = new Random().Next(palettePaths.Length);
+        var palettePath = palettePaths[paletteIndex];
+        World.LoadPalette(palettePath);
+        Console.WriteLine(palettePath);
+
         var world = new World((int) DateTime.Now.ToBinary(), 2, new Vector3(16));
         var chunkManager = new ChunkManager(world);
         chunkManager.LoadRadius = 8;
