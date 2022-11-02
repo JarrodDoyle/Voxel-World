@@ -89,13 +89,13 @@ public class ChunkManager
             _chunksToUnload.Remove(chunkPos);
     }
 
-    public void Render()
+    public void Render(Shader chunkShader)
     {
         _viewFrustum.UpdatePlanes();
         foreach (var chunkPos in _world.GetLoadedChunkPositions())
         {
             if (ChunkInFrustum(chunkPos))
-                _world.GetChunk(chunkPos)?.Render();
+                _world.GetChunk(chunkPos)?.Render(chunkShader);
         }
     }
 

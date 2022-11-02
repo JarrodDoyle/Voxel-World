@@ -35,6 +35,8 @@ internal static class Program
         var chunkManager = new ChunkManager(world);
         chunkManager.LoadRadius = 8;
 
+        var chunkShader = Raylib.LoadShader("res/shaders/base.vs", "res/shaders/base.fs");
+
         while (!Raylib.WindowShouldClose())
         {
             HandleInputs(cameraController, chunkManager);
@@ -45,7 +47,7 @@ internal static class Program
 
             Raylib.BeginMode3D(cameraController.Camera);
             chunkManager.Update(cameraController.Camera.position);
-            chunkManager.Render();
+            chunkManager.Render(chunkShader);
             Raylib.EndMode3D();
 
             UiManager.Render();
@@ -57,6 +59,7 @@ internal static class Program
         }
 
         UiManager.Shutdown();
+        Raylib.UnloadShader(chunkShader);
         Raylib.CloseWindow();
     }
 

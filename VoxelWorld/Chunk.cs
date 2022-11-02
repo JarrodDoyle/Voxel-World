@@ -65,7 +65,7 @@ public class Chunk
         _dirty = true;
     }
 
-    public void Render()
+    public void Render(Shader shader)
     {
         // If there was a mesh gen task running and it's complete we need to build the new model
         if (_modelGenTask is {IsCompleted: true})
@@ -89,7 +89,7 @@ public class Chunk
             _dirty = false;
         }
 
-        _model?.Render(_position * _dimensions, 1, Color.WHITE);
+        _model?.Render(_position * _dimensions, 1, Color.WHITE, shader);
     }
 
     private static readonly Vector3[] CubeVertices =
