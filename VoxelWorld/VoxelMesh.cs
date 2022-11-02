@@ -14,7 +14,7 @@ public unsafe struct VoxelMesh
     // Let's just get it working using the Raylib layouts for now
     private readonly int _vertexCount;
     private readonly int _triangleCount;
-    private readonly float* _vertices;
+    private readonly byte* _vertices;
     private readonly byte* _colors;
     private readonly ushort* _indices;
 
@@ -26,10 +26,10 @@ public unsafe struct VoxelMesh
         _vertexCount = vertices.Length / 3;
         _triangleCount = indices.Length / 3;
 
-        _vertices = (float*) Raylib.MemAlloc(sizeof(float) * vertices.Length);
+        _vertices = (byte*) Raylib.MemAlloc(sizeof(byte) * vertices.Length);
         _indices = (ushort*) Raylib.MemAlloc(sizeof(ushort) * indices.Length);
         _colors = (byte*) Raylib.MemAlloc(sizeof(byte) * colors.Length);
-        for (int i = 0; i < vertices.Length; i++) _vertices[i] = vertices[i];
+        for (int i = 0; i < vertices.Length; i++) _vertices[i] = (byte) vertices[i];
         for (int i = 0; i < indices.Length; i++) _indices[i] = indices[i];
         for (int i = 0; i < colors.Length; i++) _colors[i] = colors[i];
 
@@ -44,27 +44,28 @@ public unsafe struct VoxelMesh
             Raylib.TraceLog(TraceLogLevel.LOG_WARNING, $"VAO: [ID {_vaoId}] Trying to re-load an already loaded mesh");
             return;
         }
-        
+
         // Create and bind VAO
         _vaoId = Rlgl.rlLoadVertexArray();
         Rlgl.rlEnableVertexArray(_vaoId);
-        
+
         // Enable vertex attributes
         // position (shader-location = 0)
-        _vboId[0] = Rlgl.rlLoadVertexBuffer(_vertices, _vertexCount * 3 * sizeof(float), false);
-        Rlgl.rlSetVertexAttribute(0, 3, Rlgl.RL_FLOAT, false, 0, null);
+        _vboId[0] = Rlgl.rlLoadVertexBuffer(_vertices, _vertexCount * 3 * sizeof(byte), false);
+        Rlgl.rlSetVertexAttribute(0, 3, Rlgl.RL_UNSIGNED_BYTE, false, 0, null);
         Rlgl.rlEnableVertexAttribute(0);
 
         // color (shader-location = 3)
         _vboId[1] = Rlgl.rlLoadVertexBuffer(_colors, _vertexCount * 4 * sizeof(byte), false);
         Rlgl.rlSetVertexAttribute(3, 4, Rlgl.RL_UNSIGNED_BYTE, true, 0, null);
         Rlgl.rlEnableVertexAttribute(3);
-        
+
         // Indices
         _vboId[2] = Rlgl.rlLoadVertexBufferElement(_indices, _triangleCount * 3 * sizeof(ushort), false);
-        
+
         if (_vaoId > 0)
-            Raylib.TraceLog(TraceLogLevel.LOG_INFO, $"VAO: [ID {_vaoId}] VoxelMesh uploaded successfully to VRAM (GPU)");
+            Raylib.TraceLog(TraceLogLevel.LOG_INFO,
+                $"VAO: [ID {_vaoId}] VoxelMesh uploaded successfully to VRAM (GPU)");
         Rlgl.rlDisableVertexArray();
     }
 
@@ -73,20 +74,20 @@ public unsafe struct VoxelMesh
         if (_vaoId <= 0) return;
         if (!Rlgl.rlEnableVertexArray(_vaoId))
             Raylib.TraceLog(TraceLogLevel.LOG_ERROR, $"VAO: [ID {_vaoId}] Failed to bind VAO.");
-        
+
         // Calculate transformation matrix
         var matScale = Matrix4x4.CreateScale(scale);
         var matRotation = Matrix4x4.CreateRotationY(0);
         var matTranslation = Matrix4x4.CreateTranslation(position);
         var matTransform = Matrix4x4.Multiply(Matrix4x4.Multiply(matScale, matRotation), matTranslation);
         var transform = Matrix4x4.Transpose(matTransform);
-        
+
         // Set shader uniforms
         Rlgl.rlEnableShader(shader.id);
         Rlgl.rlSetUniformMatrix(shader.locs[7], Rlgl.rlGetMatrixModelview()); // matView
         Rlgl.rlSetUniformMatrix(shader.locs[8], Rlgl.rlGetMatrixProjection()); // matProjection
         Rlgl.rlSetUniformMatrix(shader.locs[9], transform * Rlgl.rlGetMatrixTransform()); // matModel
-        
+
         // Draw the mesh
         Rlgl.rlDrawVertexArrayElements(0, _triangleCount * 3, null);
 
@@ -100,7 +101,7 @@ public unsafe struct VoxelMesh
         Rlgl.rlUnloadVertexArray(_vaoId);
         foreach (var id in _vboId)
             Rlgl.rlUnloadVertexBuffer(id);
-        
+
         Raylib.MemFree(_vertices);
         Raylib.MemFree(_indices);
         Raylib.MemFree(_colors);
