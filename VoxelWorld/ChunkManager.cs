@@ -34,7 +34,10 @@ public class ChunkManager
         for (var y = -LoadRadius; y <= LoadRadius; y++)
         for (var z = -LoadRadius; z <= LoadRadius; z++)
         {
-            var chunkPos = position + new Vector3(x, y, z);
+            var offset = new Vector3(x, y, z);
+            if (offset.LengthSquared() > LoadRadius * LoadRadius) continue;
+
+            var chunkPos = position + offset;
             _chunksToUnload.Remove(chunkPos);
             if (!_world.ChunkIsLoaded(chunkPos) && !_world.ChunkIsLoading(chunkPos))
                 chunksToLoad.Add(chunkPos);
@@ -71,7 +74,7 @@ public class ChunkManager
             MathF.Floor(cameraPosition.Z / chunkDims.Z)
         );
         LoadChunksAroundPosition(cameraChunkPos);
-        
+
         var removedChunks = new List<Vector3>();
         foreach (var chunkPos in _chunksToUnload)
         {
