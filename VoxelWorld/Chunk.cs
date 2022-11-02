@@ -10,8 +10,8 @@ public class Chunk
     private readonly Vector3 _dimensions;
     private readonly Block[,,] _blocks;
     private bool _dirty;
-    private Task<Mesh?>? _modelGenTask;
-    private Model? _model;
+    private Task<VoxelMesh?>? _modelGenTask;
+    private VoxelMesh? _model;
     private readonly World _world;
 
     public Chunk(Vector3 position, Vector3 dimensions, World world)
@@ -60,7 +60,7 @@ public class Chunk
     {
         if (_model == null) return;
 
-        Raylib.UnloadModel((Model) _model);
+        _model?.Unload();
         _model = null;
         _dirty = true;
     }
@@ -74,9 +74,9 @@ public class Chunk
             var tmpMesh = _modelGenTask.Result;
             if (tmpMesh != null)
             {
-                var mesh = (Mesh) tmpMesh;
-                Raylib.UploadMesh(ref mesh, false);
-                _model = Raylib.LoadModelFromMesh(mesh);
+                var mesh = (VoxelMesh) tmpMesh;
+                mesh.Upload();
+                _model = mesh;
             }
 
             _modelGenTask = null;
@@ -89,8 +89,7 @@ public class Chunk
             _dirty = false;
         }
 
-        if (_model == null) return;
-        Raylib.DrawModel((Model) _model, _position * _dimensions, 1, Color.WHITE);
+        _model?.Render(_position * _dimensions, 1, Color.WHITE);
     }
 
     private static readonly Vector3[] CubeVertices =
@@ -119,7 +118,7 @@ public class Chunk
     private static readonly Vector3 AmbientDir = new(1, 3, 2);
 
     // TODO: This probably shouldn't be in this file
-    private Mesh? GenerateMesh()
+    private VoxelMesh? GenerateMesh()
     {
         var verticesVec3 = new List<Vector3>();
         var indices = new List<ushort>();
@@ -208,6 +207,6 @@ public class Chunk
 
         // Build the model
         if (verticesVec3.Count == 0) return null;
-        return MeshBuilder.BuildMesh(vertices.ToArray(), indices.ToArray(), colours.ToArray());
+        return new VoxelMesh(vertices.ToArray(), indices.ToArray(), colours.ToArray());
     }
 }
