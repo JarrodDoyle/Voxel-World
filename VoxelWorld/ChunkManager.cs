@@ -34,10 +34,9 @@ public class ChunkManager
         for (var y = -LoadRadius; y <= LoadRadius; y++)
         for (var z = -LoadRadius; z <= LoadRadius; z++)
         {
-            var offset = new Vector3(x, y, z);
-            if (offset.LengthSquared() > LoadRadius * LoadRadius) continue;
+            var chunkPos = position + new Vector3(x, y, z);
+            if (!PointInRadius(position, LoadRadius, chunkPos)) continue;
 
-            var chunkPos = position + offset;
             _chunksToUnload.Remove(chunkPos);
             if (!_world.ChunkIsLoaded(chunkPos) && !_world.ChunkIsLoading(chunkPos))
                 chunksToLoad.Add(chunkPos);
@@ -60,9 +59,8 @@ public class ChunkManager
 
     private bool PointInRadius(Vector3 center, int radius, Vector3 point)
     {
-        return center.X - radius <= point.X && point.X <= center.X + radius &&
-               center.Y - radius <= point.Y && point.Y <= center.Y + radius &&
-               center.Z - radius <= point.Z && point.Z <= center.Z + radius;
+        var offset = point - center;
+        return offset.LengthSquared() <= radius * radius;
     }
 
     public void Update(Vector3 cameraPosition)
