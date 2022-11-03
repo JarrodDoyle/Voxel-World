@@ -108,7 +108,7 @@ public class World
         var alreadyLoading = !_loadingChunks.TryAdd(chunkPosition, 0);
         if (alreadyLoading) return;
 
-        Task.Run(() =>
+        ThreadManager.AddTask(TaskType.ChunkGenerationThread, new Task(() =>
         {
             var chunk = _generator.GenerateChunk(chunkPosition, ChunkDimensions, this);
             if (ChunkIsLoaded(chunkPosition))
@@ -120,7 +120,7 @@ public class World
             else _chunks.TryAdd(chunkPosition, chunk);
 
             _loadingChunks.Remove(chunkPosition, out _);
-        });
+        }));
     }
 
     /// <summary>

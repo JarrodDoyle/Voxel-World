@@ -41,6 +41,7 @@ internal static class Program
         {
             HandleInputs(cameraController, chunkManager);
             UiManager.Update();
+            ThreadManager.Update();
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.BLACK);

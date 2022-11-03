@@ -85,7 +85,8 @@ public class Chunk
         // Only starts a new task if one isn't already running
         if (_dirty && _modelGenTask == null)
         {
-            _modelGenTask = Task.Run(GenerateMesh);
+            _modelGenTask = new Task<VoxelMesh?>(GenerateMesh);
+            ThreadManager.AddTask(TaskType.ChunkMeshingThread, _modelGenTask);
             _dirty = false;
         }
 
