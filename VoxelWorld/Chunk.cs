@@ -8,7 +8,7 @@ public class Chunk
 {
     private readonly Vector3 _position;
     private readonly Vector3 _dimensions;
-    private readonly Block[,,] _blocks;
+    private readonly VoxelStorage _blocks;
     private bool _dirty;
     private Task<VoxelMesh?>? _modelGenTask;
     private VoxelMesh? _model;
@@ -18,15 +18,20 @@ public class Chunk
     {
         _position = position;
         _dimensions = dimensions;
-        _blocks = new Block[(int) dimensions.X, (int) dimensions.Y, (int) dimensions.Z];
+        _blocks = new VoxelStorage((int) (dimensions.X * dimensions.Y * dimensions.Z));
         _dirty = false;
         _world = world;
+    }
+
+    private int GetBlockIndex(int x, int y, int z)
+    {
+        return (int) (x + y * _dimensions.X + z * _dimensions.X * _dimensions.Y);
     }
 
     public Block GetBlock(Vector3 pos)
     {
         if (PosInChunk(pos))
-            return _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z];
+            return _blocks.GetBlock(GetBlockIndex((int) pos.X, (int) pos.Y, (int) pos.Z));
         var block = _world.GetBlock((_position * _dimensions) + pos);
         return block;
     }
@@ -39,7 +44,7 @@ public class Chunk
     public bool SetBlock(Vector3 pos, Block value)
     {
         if (!PosInChunk(pos)) return false;
-        _blocks[(int) pos.X, (int) pos.Y, (int) pos.Z] = value;
+        _blocks.SetBlock(GetBlockIndex((int) pos.X, (int) pos.Y, (int) pos.Z), value);
         _dirty = true;
         return true;
     }
@@ -146,7 +151,7 @@ public class Chunk
         for (var y = 0; y < _dimensions.Y; y++)
         for (var z = 0; z < _dimensions.Z; z++)
         {
-            var block = _blocks[x, y, z];
+            var block = _blocks.GetBlock(GetBlockIndex(x, y, z));
             if (block.BlockType == BlockType.Air) continue;
 
             var pos = new Vector3(x, y, z);
