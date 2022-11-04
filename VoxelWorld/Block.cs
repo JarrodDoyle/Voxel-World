@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace VoxelWorld;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct Block
+public readonly record struct Block
 {
     private readonly byte _color;
     private readonly byte _blockType;

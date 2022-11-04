@@ -4,13 +4,8 @@ namespace VoxelWorld;
 
 internal struct PaletteEntry
 {
-    public short RefCount = 1;
+    public short RefCount;
     public Block Block;
-
-    public PaletteEntry(Block block = default)
-    {
-        Block = block;
-    }
 }
 
 public class VoxelStorage
@@ -37,14 +32,14 @@ public class VoxelStorage
         currentEntry.RefCount--;
 
         // If the block is already in the palette we can use it's existing palette entry
-        var replace = Array.FindIndex(_palette, entry => entry.Block.BlockType == block.BlockType);
+        var replace = Array.FindIndex(_palette, entry => entry.Block == block);
         if (replace != -1)
         {
             SetPaletteIndex(blockIndex, replace);
             _palette[replace].RefCount++;
             return;
         }
-        
+
         // Else if the currentEntry can be replaced, replace it
         if (currentEntry.RefCount == 0)
         {
@@ -55,9 +50,8 @@ public class VoxelStorage
 
         // Else we need to make a new entry!
         var newPaletteIndex = NewPaletteEntry();
-        _palette[newPaletteIndex] = new PaletteEntry(block);
+        _palette[newPaletteIndex] = new PaletteEntry {Block = block, RefCount = 1};
         SetPaletteIndex(blockIndex, newPaletteIndex);
-        // paletteCount++;
     }
 
     public Block GetBlock(int blockIndex)
@@ -71,7 +65,7 @@ public class VoxelStorage
         var firstFree = Array.FindIndex(_palette, entry => entry.RefCount == 0);
         if (firstFree != -1)
             return firstFree;
-        
+
         // If there's no free spots in the palette we have to grow it and then try again
         GrowPalette();
         return NewPaletteEntry();
@@ -83,14 +77,14 @@ public class VoxelStorage
         var indices = new int[_numVoxels];
         for (var i = 0; i < _numVoxels; i++)
             indices[i] = GetPaletteIndex(i);
-        
+
         // Create the new palette
         // We might as well double it in size, because adding 1 more indexing bit doubles the indexing range
         _indexLength++;
         var newPalette = new PaletteEntry[(int) Math.Pow(2, _indexLength)];
         Array.Copy(_palette, newPalette, _palette.Length);
         _palette = newPalette;
-        
+
         // Create the new bitarray and copy current indices into it
         _data = new BitArray(_numVoxels * _indexLength);
         for (var i = 0; i < _numVoxels; i++)
