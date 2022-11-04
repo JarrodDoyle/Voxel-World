@@ -20,6 +20,8 @@ public class VoxelStorage
         _numVoxels = size;
         _indexLength = 1;
         _palette = new PaletteEntry[(int) Math.Pow(2, _indexLength)];
+        _palette[0] = new PaletteEntry {Block = default, RefCount = (short)_numVoxels};
+        _palette[1] = new PaletteEntry {Block = default, RefCount = 0};
         _data = new BitArray(_numVoxels * _indexLength);
     }
 
